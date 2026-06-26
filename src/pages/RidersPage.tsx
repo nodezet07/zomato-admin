@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Eye, ExternalLink } from 'lucide-react';
+import { Bike, CheckCircle2, Clock, Eye, ExternalLink, XCircle } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
+import { StatCard } from '@/components/dashboard/StatCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FilterPills } from '@/components/ui/filter-pills';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -27,6 +29,13 @@ import { approveRider, fetchRiders, rejectRider } from '@/services/admin';
 import { formatCurrency } from '@/lib/utils';
 import type { RiderRow } from '@/types/api';
 
+const STATUS_FILTERS = [
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+] as const;
+
 function statusVariant(status: string) {
   if (status === 'approved') return 'default' as const;
   if (status === 'rejected') return 'destructive' as const;
@@ -36,7 +45,7 @@ function statusVariant(status: string) {
 function DocPreview({ label, url }: { label: string; url?: string }) {
   if (!url) {
     return (
-      <div className="rounded-lg border border-dashed border-black/10 bg-zinc-50 p-4 text-center text-xs text-muted">
+      <div className="rounded-lg border border-dashed border-black/10 bg-zinc-50 p-4 text-center text-xs text-muted-foreground">
         {label} — not uploaded
       </div>
     );
@@ -44,7 +53,7 @@ function DocPreview({ label, url }: { label: string; url?: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
         <a
           href={url}
           target="_blank"
@@ -58,21 +67,47 @@ function DocPreview({ label, url }: { label: string; url?: string }) {
         <img
           src={url}
           alt={label}
-          className="max-h-48 w-full rounded-lg border border-black/10 object-contain bg-zinc-50"
+          className="max-h-48 w-full rounded-lg border border-black/10 bg-zinc-50 object-contain"
         />
       </a>
     </div>
   );
 }
 
+function useRiderStatusCounts() {
+  const results = useQueries({
+    queries: STATUS_FILTERS.filter((f) => f.value !== '').map((f) => ({
+      queryKey: ['admin-riders-count', f.value],
+      queryFn: () => fetchRiders(1, f.value),
+      staleTime: 60_000,
+    })),
+  });
+
+  const allQ = useQuery({
+    queryKey: ['admin-riders-count', 'all'],
+    queryFn: () => fetchRiders(1),
+    staleTime: 60_000,
+  });
+
+  return {
+    all: allQ.data?.pagination.total ?? 0,
+    pending: results[0]?.data?.pagination.total ?? 0,
+    approved: results[1]?.data?.pagination.total ?? 0,
+    rejected: results[2]?.data?.pagination.total ?? 0,
+    loading: allQ.isLoading || results.some((r) => r.isLoading),
+  };
+}
+
 export function RidersPage() {
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
-  const status = searchParams.get('status') ?? 'pending';
+  const status = searchParams.has('status') ? (searchParams.get('status') ?? '') : 'pending';
   const [reviewRider, setReviewRider] = useState<RiderRow | null>(null);
   const [rejectTarget, setRejectTarget] = useState<RiderRow | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+
+  const counts = useRiderStatusCounts();
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-riders', page, status],
@@ -85,6 +120,7 @@ export function RidersPage() {
       toast.success('Rider approved — they can now log in');
       setReviewRider(null);
       qc.invalidateQueries({ queryKey: ['admin-riders'] });
+      qc.invalidateQueries({ queryKey: ['admin-riders-count'] });
       qc.invalidateQueries({ queryKey: ['admin-dashboard'] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -98,6 +134,7 @@ export function RidersPage() {
       setRejectReason('');
       setReviewRider(null);
       qc.invalidateQueries({ queryKey: ['admin-riders'] });
+      qc.invalidateQueries({ queryKey: ['admin-riders-count'] });
       qc.invalidateQueries({ queryKey: ['admin-dashboard'] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -105,96 +142,139 @@ export function RidersPage() {
 
   function onStatusChange(next: string) {
     setPage(1);
-    if (next) setSearchParams({ status: next });
-    else setSearchParams({});
+    setSearchParams({ status: next });
   }
+
+  const filterOptions = STATUS_FILTERS.map((f) => ({
+    ...f,
+    count:
+      f.value === ''
+        ? counts.all
+        : f.value === 'pending'
+          ? counts.pending
+          : f.value === 'approved'
+            ? counts.approved
+            : counts.rejected,
+  }));
 
   return (
     <PageShell
       eyebrow="Delivery fleet"
       title="Riders"
       subtitle="Review KYC documents, bank details, and approve or reject rider applications"
-      action={
-        <select
-          className="rounded-lg border border-black/10 px-3 py-2 text-sm"
-          value={status}
-          onChange={(e) => onStatusChange(e.target.value)}
-        >
-          <option value="">All statuses</option>
-          <option value="pending">Pending approval</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      }
     >
-      <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Total riders"
+          value={counts.loading ? '…' : counts.all}
+          hint="Registered on platform"
+          icon={Bike}
+          accent="brand"
+          onClick={() => onStatusChange('')}
+        />
+        <StatCard
+          label="Pending approval"
+          value={counts.loading ? '…' : counts.pending}
+          hint="Awaiting KYC review"
+          icon={Clock}
+          accent="warning"
+          onClick={() => onStatusChange('pending')}
+        />
+        <StatCard
+          label="Approved"
+          value={counts.loading ? '…' : counts.approved}
+          hint="Can go online & deliver"
+          icon={CheckCircle2}
+          accent="success"
+          onClick={() => onStatusChange('approved')}
+        />
+        <StatCard
+          label="Rejected"
+          value={counts.loading ? '…' : counts.rejected}
+          hint="Needs re-application"
+          icon={XCircle}
+          accent="danger"
+          onClick={() => onStatusChange('rejected')}
+        />
+      </div>
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <FilterPills options={filterOptions} value={status} onChange={onStatusChange} />
+        <p className="text-xs font-semibold text-muted-foreground">
+          Showing {data?.riders.length ?? 0} of {data?.pagination.total ?? 0} riders
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-black/5 bg-white shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Rider</TableHead>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Deliveries</TableHead>
-              <TableHead>Earnings</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-zinc-50/80 hover:bg-zinc-50/80">
+              <TableHead className="font-bold">Code</TableHead>
+              <TableHead className="font-bold">Rider</TableHead>
+              <TableHead className="font-bold">Vehicle</TableHead>
+              <TableHead className="font-bold">Status</TableHead>
+              <TableHead className="font-bold">Deliveries</TableHead>
+              <TableHead className="font-bold">Earnings</TableHead>
+              <TableHead className="text-right font-bold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted">
-                  Loading…
+                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                  Loading riders…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && !data?.riders.length && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted">
+                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                   No riders found for this filter.
                 </TableCell>
               </TableRow>
             )}
             {data?.riders.map((r) => (
-              <TableRow key={r._id}>
-                <TableCell className="font-mono text-sm">{r.riderCode}</TableCell>
+              <TableRow key={r._id} className="hover:bg-zinc-50/50">
+                <TableCell className="font-mono text-sm font-semibold">{r.riderCode}</TableCell>
                 <TableCell>
-                  <p className="font-semibold">{r.userId?.fullName ?? '—'}</p>
-                  <p className="text-xs text-muted">{r.userId?.mobile ?? r.userId?.email}</p>
+                  <p className="font-semibold text-ink">{r.userId?.fullName ?? '—'}</p>
+                  <p className="text-xs text-muted-foreground">{r.userId?.mobile ?? r.userId?.email}</p>
                 </TableCell>
                 <TableCell className="text-sm">
-                  <p className="capitalize">{r.vehicleType?.toLowerCase() ?? '—'}</p>
-                  <p className="text-xs text-muted">{r.vehicleNumber ?? '—'}</p>
+                  <p className="font-medium capitalize">{r.vehicleType?.toLowerCase() ?? '—'}</p>
+                  <p className="text-xs text-muted-foreground">{r.vehicleNumber ?? '—'}</p>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={statusVariant(r.verificationStatus)}>
+                  <Badge variant={statusVariant(r.verificationStatus)} className="capitalize">
                     {r.verificationStatus}
                   </Badge>
                 </TableCell>
-                <TableCell>{r.totalDeliveries}</TableCell>
-                <TableCell>{formatCurrency(r.totalEarnings)}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => setReviewRider(r)}>
-                    <Eye className="size-3.5 mr-1" />
-                    Review
-                  </Button>
-                  {r.verificationStatus === 'pending' && (
-                    <>
-                      <Button size="sm" onClick={() => approveMut.mutate(r._id)}>
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setRejectTarget(r);
-                          setRejectReason('');
-                        }}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
+                <TableCell className="font-semibold">{r.totalDeliveries}</TableCell>
+                <TableCell className="font-semibold">{formatCurrency(r.totalEarnings)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setReviewRider(r)}>
+                      <Eye className="mr-1 size-3.5" />
+                      Review
+                    </Button>
+                    {r.verificationStatus === 'pending' && (
+                      <>
+                        <Button size="sm" onClick={() => approveMut.mutate(r._id)}>
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setRejectTarget(r);
+                            setRejectReason('');
+                          }}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -207,7 +287,7 @@ export function RidersPage() {
           <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Prev
           </Button>
-          <span className="text-sm text-muted">
+          <span className="text-sm text-muted-foreground">
             Page {page} of {data.pagination.totalPages}
           </span>
           <Button
@@ -221,7 +301,7 @@ export function RidersPage() {
       )}
 
       <Dialog open={!!reviewRider} onOpenChange={() => setReviewRider(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Rider verification — {reviewRider?.userId?.fullName}</DialogTitle>
             <DialogDescription>
@@ -230,20 +310,20 @@ export function RidersPage() {
           </DialogHeader>
           {reviewRider && (
             <div className="space-y-5">
-              <div className="grid gap-3 sm:grid-cols-2 text-sm">
+              <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-bold uppercase text-muted">Vehicle</p>
+                  <p className="text-xs font-bold uppercase text-muted-foreground">Vehicle</p>
                   <p className="font-semibold capitalize">
                     {reviewRider.vehicleType?.toLowerCase() ?? '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase text-muted">Vehicle number</p>
+                  <p className="text-xs font-bold uppercase text-muted-foreground">Vehicle number</p>
                   <p className="font-semibold">{reviewRider.vehicleNumber ?? '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase text-muted">Status</p>
-                  <Badge variant={statusVariant(reviewRider.verificationStatus)}>
+                  <p className="text-xs font-bold uppercase text-muted-foreground">Status</p>
+                  <Badge variant={statusVariant(reviewRider.verificationStatus)} className="mt-1 capitalize">
                     {reviewRider.verificationStatus}
                   </Badge>
                 </div>
@@ -255,23 +335,23 @@ export function RidersPage() {
                 <DocPreview label="Aadhaar card" url={reviewRider.aadhaarCard} />
               </div>
 
-              <div className="rounded-xl border border-black/5 bg-zinc-50 p-4 space-y-2 text-sm">
-                <p className="text-xs font-bold uppercase text-muted">Bank account</p>
+              <div className="space-y-2 rounded-xl border border-black/5 bg-zinc-50 p-4 text-sm">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Bank account</p>
                 <p>
-                  <span className="text-muted">Holder: </span>
+                  <span className="text-muted-foreground">Holder: </span>
                   {reviewRider.bankAccountDetails?.accountHolderName ?? '—'}
                 </p>
                 <p>
-                  <span className="text-muted">Account: </span>
+                  <span className="text-muted-foreground">Account: </span>
                   {reviewRider.bankAccountDetails?.accountNumber ?? '—'}
                 </p>
                 <p>
-                  <span className="text-muted">IFSC: </span>
+                  <span className="text-muted-foreground">IFSC: </span>
                   {reviewRider.bankAccountDetails?.ifscCode ?? '—'}
                 </p>
                 {reviewRider.bankAccountDetails?.bankName && (
                   <p>
-                    <span className="text-muted">Bank: </span>
+                    <span className="text-muted-foreground">Bank: </span>
                     {reviewRider.bankAccountDetails.bankName}
                   </p>
                 )}
@@ -308,8 +388,8 @@ export function RidersPage() {
           <DialogHeader>
             <DialogTitle>Reject rider</DialogTitle>
             <DialogDescription>
-              {rejectTarget?.userId?.fullName} ({rejectTarget?.riderCode}) will not be able to log
-              in until they re-register.
+              {rejectTarget?.userId?.fullName} ({rejectTarget?.riderCode}) will not be able to log in
+              until they re-register.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

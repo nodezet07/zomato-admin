@@ -1,369 +1,395 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PageShell } from '@/components/layout/PageShell';
+import {
+  DonutBreakdownChart,
+  HorizontalBarList,
+  QuickStatsCard,
+} from '@/components/dashboard/BreakdownCharts';
+import { RevenueAreaChart } from '@/components/dashboard/RevenueAreaChart';
+import {
+  formatSparkCurrency,
+  SparklineStatCard,
+  type SparklinePoint,
+} from '@/components/dashboard/SparklineStatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  fetchDashboard, 
-  fetchFinanceSummary, 
-  fetchAnalyticsSummary, 
-  fetchTaxReport 
+import {
+  fetchAnalyticsSummary,
+  fetchDashboard,
+  fetchFinanceSummary,
+  fetchTaxReport,
 } from '@/services/admin';
-import { formatCurrency } from '@/lib/utils';
-import { 
-  Users, 
-  Store, 
-  Bike, 
-  ClipboardList, 
-  TrendingUp, 
-  ShieldAlert, 
-  LineChart,
-  Percent,
-  CheckCircle,
-  Truck,
-  PiggyBank
+import { cn, formatCurrency } from '@/lib/utils';
+import {
+  Bike,
+  ClipboardList,
+  IndianRupee,
+  Store,
+  TrendingUp,
+  Users,
+  ChevronRight,
 } from 'lucide-react';
 
-function StatCard({ 
-  label, 
-  value, 
-  hint, 
-  icon: Icon 
-}: { 
-  label: string; 
-  value: string | number; 
-  hint?: string;
-  icon?: any;
-}) {
-  return (
-    <Card className="border-black/5 shadow-sm bg-white hover:shadow-md transition duration-300">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted">{label}</CardTitle>
-        {Icon && <Icon className="h-4.5 w-4.5 text-muted/65" />}
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-black text-ink">{value}</p>
-        {hint && <p className="mt-1 text-xs text-muted font-medium">{hint}</p>}
-      </CardContent>
-    </Card>
-  );
+type DayRow = { _id: string; revenue?: number; count?: number; orders?: number; deliveries?: number };
+
+function toSparkline(rows: DayRow[], valueKey: keyof DayRow): SparklinePoint[] {
+  return rows.map((r) => ({
+    date: r._id,
+    value: Number(r[valueKey] ?? 0),
+  }));
 }
 
-function MiniBarChart({ data, valueType = 'currency' }: { 
-  data: Array<{ _id: string; revenue?: number; orders?: number; taxCollected?: number }>;
-  valueType?: 'currency' | 'number';
-}) {
-  const max = Math.max(...data.map((d) => d.revenue ?? d.orders ?? d.taxCollected ?? 0), 1);
-  return (
-    <div className="flex items-end gap-2 h-44 mt-6">
-      {data.slice(-14).map((d) => {
-        const val = d.revenue ?? d.orders ?? d.taxCollected ?? 0;
-        const h = Math.max(6, (val / max) * 100);
-        const displayVal = valueType === 'currency' ? formatCurrency(val) : String(val);
-        
-        return (
-          <div key={d._id} className="flex-1 flex flex-col items-center gap-1.5 group cursor-pointer">
-            <div className="w-full relative flex flex-col justify-end">
-              {/* Tooltip on hover */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-zinc-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none whitespace-nowrap shadow-md">
-                {d._id}: {displayVal}
-              </div>
-              <div 
-                className="w-full bg-brand/80 group-hover:bg-brand rounded-t transition duration-300" 
-                style={{ height: `${h}px` }} 
-              />
-            </div>
-            <span className="text-[10px] font-bold text-muted truncate w-full text-center">{d._id.slice(5)}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+const RANGE_OPTIONS = [
+  { value: '7', label: '7 days' },
+  { value: '30', label: '30 days' },
+  { value: '90', label: '90 days' },
+] as const;
 
 export function DashboardPage() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isAnalyticsView = pathname.startsWith('/analytics');
+  const pageTitle = isAnalyticsView ? 'Analytics' : 'Dashboard';
+  const pageSubtitle = isAnalyticsView
+    ? 'Revenue trends, order volume, and platform performance'
+    : 'Track revenue, orders, fleet health, and payouts in one place';
   const [days, setDays] = useState('30');
-  
-  // Queries
+  const daysNum = Number(days);
+
   const statsQ = useQuery({ queryKey: ['admin-dashboard'], queryFn: fetchDashboard });
   const financeQ = useQuery({ queryKey: ['admin-finance-summary'], queryFn: fetchFinanceSummary });
-  
   const summaryQ = useQuery({
     queryKey: ['admin-analytics', days],
-    queryFn: () => fetchAnalyticsSummary(Number(days)),
+    queryFn: () => fetchAnalyticsSummary(daysNum),
   });
-  
   const taxQ = useQuery({
     queryKey: ['admin-tax', days],
-    queryFn: () => fetchTaxReport(Number(days)),
+    queryFn: () => fetchTaxReport(daysNum),
   });
 
   const stats = statsQ.data;
   const finance = financeQ.data;
-  
-  const sales = summaryQ.data?.sales as Record<string, any> | undefined;
-  const orders = summaryQ.data?.orders as Record<string, any> | undefined;
-  const delivery = summaryQ.data?.delivery as Record<string, any> | undefined;
-  const tax = taxQ.data as Record<string, any> | undefined;
+  const sales = summaryQ.data?.sales as Record<string, unknown> | undefined;
+  const orders = summaryQ.data?.orders as Record<string, unknown> | undefined;
+  const users = summaryQ.data?.users as Record<string, unknown> | undefined;
+  const delivery = summaryQ.data?.delivery as Record<string, unknown> | undefined;
+  const tax = taxQ.data as Record<string, unknown> | undefined;
 
-  const isLoading = statsQ.isLoading || financeQ.isLoading || summaryQ.isLoading || taxQ.isLoading;
+  const isLoading =
+    statsQ.isLoading || financeQ.isLoading || summaryQ.isLoading || taxQ.isLoading;
+
+  const revenueByDay = (sales?.revenueByDay as DayRow[]) ?? [];
+  const ordersByDay = (orders?.ordersByDay as DayRow[]) ?? [];
+  const newUsersByDay = (users?.newUsersByDay as DayRow[]) ?? [];
+  const deliveriesByDay = (delivery?.deliveriesByDay as DayRow[]) ?? [];
+  const ordersByStatus = (orders?.ordersByStatus as Array<{ _id: string; count: number }>) ?? [];
+  const paymentMethods =
+    (sales?.revenueByPaymentMethod as Array<{ _id: string; revenue: number }>) ?? [];
+  const topRestaurants =
+    (sales?.topRestaurants as Array<{ restaurantName?: string; revenue: number; orders: number }>) ??
+    [];
+
+  const derived = useMemo(() => {
+    const rangeRevenue = Number(sales?.totalRevenue ?? 0);
+    const deliveredOrders = Number(sales?.deliveredOrders ?? 0);
+    const avgOrderValue = Number(sales?.avgOrderValue ?? 0);
+    const revenuePerDay = daysNum > 0 ? rangeRevenue / daysNum : 0;
+    const ordersPerDay = daysNum > 0 ? deliveredOrders / daysNum : 0;
+    const capturedRatio = stats?.revenue.totalDelivered
+      ? ((stats.revenue.capturedPayments / stats.revenue.totalDelivered) * 100).toFixed(1)
+      : '0';
+
+    return {
+      rangeRevenue,
+      deliveredOrders,
+      avgOrderValue,
+      revenuePerDay,
+      ordersPerDay,
+      capturedRatio,
+    };
+  }, [sales, stats, daysNum]);
 
   if (isLoading) {
     return (
-      <PageShell title="Dashboard & Analytics" subtitle="Loading platform overview metrics...">
+      <PageShell title={pageTitle} subtitle="Loading platform overview…">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
+            <Skeleton key={i} className="h-36 rounded-xl" />
           ))}
         </div>
+        <Skeleton className="mt-4 h-72 rounded-xl" />
       </PageShell>
     );
   }
 
-  // Calculated custom stats ratios
-  const capturedRatio = stats?.revenue.totalDelivered 
-    ? ((stats.revenue.capturedPayments / stats.revenue.totalDelivered) * 100).toFixed(1)
-    : '0';
+  const revenueChartData = revenueByDay.map((d) => ({
+    date: d._id,
+    revenue: d.revenue ?? 0,
+    orders: d.orders ?? 0,
+  }));
+
+  const statusDonut = ordersByStatus.map((s) => ({
+    name: s._id,
+    value: s.count,
+  }));
+
+  const paymentBars = paymentMethods.map((p) => ({
+    label: p._id || 'Unknown',
+    value: p.revenue,
+  }));
+
+  const restaurantBars = topRestaurants.map((r) => ({
+    label: r.restaurantName ?? 'Restaurant',
+    value: r.revenue,
+  }));
 
   return (
     <PageShell
-      eyebrow="Insights & Management"
-      title="Dashboard & Analytics"
-      subtitle="Merged real-time platform metrics, financial summaries, and tax reports"
+      eyebrow={isAnalyticsView ? 'Analytics' : 'Platform overview'}
+      title={pageTitle}
+      subtitle={pageSubtitle}
       action={
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-muted uppercase tracking-wider">Report Range:</span>
-          <select 
-            className="rounded-lg border px-3 py-2 text-sm font-semibold bg-white cursor-pointer shadow-sm text-zinc-700" 
-            value={days} 
-            onChange={(e) => setDays(e.target.value)}
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-black/10 bg-white p-1 shadow-sm">
+          {RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setDays(opt.value)}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-xs font-bold transition',
+                days === opt.value
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-zinc-600 hover:bg-zinc-50',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       }
     >
-      {/* Real-time stats grid */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
-        <StatCard label="Total Users" value={stats?.users.total ?? 0} icon={Users} />
-        <StatCard
-          label="Restaurants Active"
-          value={stats?.restaurants.total ?? 0}
-          hint={`${stats?.restaurants.pendingApproval ?? 0} pending approval`}
-          icon={Store}
+      {/* KPI sparkline row */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SparklineStatCard
+          label="Range revenue"
+          sublabel={`${days}d`}
+          value={formatCurrency(derived.rangeRevenue)}
+          series={toSparkline(revenueByDay, 'revenue')}
+          color="hsl(24 100% 50%)"
+          icon={IndianRupee}
+          formatChange={formatSparkCurrency}
         />
-        <StatCard
-          label="Riders Active"
-          value={stats?.riders.total ?? 0}
-          hint={
-            (stats?.riders.pendingApproval ?? 0) > 0
-              ? `${stats?.riders.pendingApproval ?? 0} pending — open Riders page`
-              : 'All riders verified'
-          }
-          icon={Bike}
-        />
-        <StatCard
-          label="Orders Today"
-          value={stats?.orders.today ?? 0}
-          hint={`${stats?.orders.active ?? 0} active currently`}
+        <SparklineStatCard
+          label="Delivered orders"
+          sublabel={`${days}d`}
+          value={derived.deliveredOrders.toLocaleString()}
+          series={toSparkline(ordersByDay, 'count')}
+          color="hsl(173 58% 39%)"
           icon={ClipboardList}
+        />
+        <SparklineStatCard
+          label="New users"
+          sublabel={`${days}d`}
+          value={Number(users?.newUsersInPeriod ?? 0).toLocaleString()}
+          series={toSparkline(newUsersByDay, 'count')}
+          color="hsl(221 83% 53%)"
+          icon={Users}
+        />
+        <SparklineStatCard
+          label="Deliveries"
+          sublabel={`${days}d`}
+          value={Number(delivery?.totalDeliveriesInPeriod ?? 0).toLocaleString()}
+          series={toSparkline(deliveriesByDay, 'deliveries')}
+          color="hsl(142 76% 36%)"
+          icon={Bike}
         />
       </div>
 
-      <Tabs defaultValue="platform" className="w-full">
-        <TabsList className="bg-zinc-100 p-1 rounded-xl">
-          <TabsTrigger value="platform" className="rounded-lg font-bold text-sm">Platform Health</TabsTrigger>
-          <TabsTrigger value="revenue" className="rounded-lg font-bold text-sm">Sales & Volume</TabsTrigger>
-          <TabsTrigger value="finance" className="rounded-lg font-bold text-sm">Finance & Payouts</TabsTrigger>
-          <TabsTrigger value="gst" className="rounded-lg font-bold text-sm">GST & Tax Reports</TabsTrigger>
-        </TabsList>
+      {/* Platform snapshot row */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SparklineStatCard
+          label="Total users"
+          value={(stats?.users.total ?? 0).toLocaleString()}
+          series={toSparkline(newUsersByDay, 'count')}
+          color="hsl(221 83% 53%)"
+          icon={Users}
+          onClick={() => navigate('/users')}
+        />
+        <SparklineStatCard
+          label="Restaurants"
+          value={(stats?.restaurants.total ?? 0).toLocaleString()}
+          series={[{ date: 'now', value: stats?.restaurants.total ?? 0 }]}
+          color="hsl(24 100% 50%)"
+          icon={Store}
+          onClick={() => navigate('/restaurants')}
+        />
+        <SparklineStatCard
+          label="Riders"
+          value={(stats?.riders.total ?? 0).toLocaleString()}
+          series={toSparkline(deliveriesByDay, 'deliveries')}
+          color="hsl(142 76% 36%)"
+          icon={Bike}
+          onClick={() => navigate('/riders?status=pending')}
+        />
+        <SparklineStatCard
+          label="Captured GMV"
+          value={formatCurrency(stats?.revenue.capturedPayments ?? 0)}
+          series={toSparkline(revenueByDay, 'revenue')}
+          color="hsl(173 58% 39%)"
+          icon={TrendingUp}
+          formatChange={formatSparkCurrency}
+        />
+      </div>
 
-        {/* Tab 1: Platform health & operations summary */}
-        <TabsContent value="platform" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              label="Delivered GMV"
-              value={formatCurrency(stats?.revenue.totalDelivered ?? 0)}
-              hint={`Payments captured ratio: ${capturedRatio}%`}
-              icon={CheckCircle}
-            />
-            <StatCard
-              label="Captured Payments"
-              value={formatCurrency(stats?.revenue.capturedPayments ?? 0)}
-              icon={TrendingUp}
-            />
-            <StatCard
-              label="Pending Support/Refunds"
-              value={stats?.support.pendingRefundTickets ?? 0}
-              hint="Requires admin review"
-              icon={ShieldAlert}
-            />
-          </div>
+      {/* Main charts */}
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        <RevenueAreaChart data={revenueChartData} days={daysNum} />
+        <DonutBreakdownChart
+          title="Orders by status"
+          subtitle="Distribution in selected period"
+          data={statusDonut}
+          centerLabel={String(orders?.totalOrders ?? 0)}
+        />
+      </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 mt-4">
-            <Card className="border-black/5 shadow-sm">
-              <CardHeader><CardTitle className="text-sm font-bold">Today's Activity Feed</CardTitle></CardHeader>
-              <CardContent className="flex flex-col gap-3 text-xs leading-relaxed text-zinc-600">
-                <div className="flex items-center justify-between py-1.5 border-b border-zinc-100">
-                  <span className="font-semibold text-zinc-800">&bull; Orders delivered today</span>
-                  <span className="font-black text-emerald-600">{stats?.orders.today ?? 0}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-zinc-100">
-                  <span className="font-semibold text-zinc-800">&bull; Total pending restaurant approvals</span>
-                  <span className="font-black text-amber-600">{stats?.restaurants.pendingApproval ?? 0}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-zinc-100">
-                  <span className="font-semibold text-zinc-800">&bull; Total pending rider verifications</span>
-                  <Link
-                    to="/riders?status=pending"
-                    className="font-black text-amber-600 hover:underline"
-                  >
-                    {stats?.riders.pendingApproval ?? 0} — review
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <HorizontalBarList
+          title="Revenue by payment method"
+          subtitle="How customers pay"
+          items={paymentBars}
+          valueFormatter={(n) => formatCurrency(n)}
+        />
+        <HorizontalBarList
+          title="Top restaurants"
+          subtitle="Highest revenue in period"
+          items={restaurantBars}
+          valueFormatter={(n) => formatCurrency(n)}
+        />
+      </div>
 
-            <Card className="border-black/5 shadow-sm">
-              <CardHeader><CardTitle className="text-sm font-bold">Settlement Batches Pipeline</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-                  <div className="font-bold text-zinc-500 uppercase tracking-wide text-[9px]">Rest. Pending Payouts</div>
-                  <div className="text-lg font-black text-zinc-800 mt-1">{finance?.settlementBatches.restaurantPending ?? 0} batch</div>
-                </div>
-                <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-                  <div className="font-bold text-zinc-500 uppercase tracking-wide text-[9px]">Rest. Paid Settlements</div>
-                  <div className="text-lg font-black text-zinc-800 mt-1">{finance?.settlementBatches.restaurantPaid ?? 0} batch</div>
-                </div>
-                <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-                  <div className="font-bold text-zinc-500 uppercase tracking-wide text-[9px]">Rider Pending Payouts</div>
-                  <div className="text-lg font-black text-zinc-800 mt-1">{finance?.settlementBatches.riderPending ?? 0} batch</div>
-                </div>
-                <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-                  <div className="font-bold text-zinc-500 uppercase tracking-wide text-[9px]">Rider Paid Payouts</div>
-                  <div className="text-lg font-black text-zinc-800 mt-1">{finance?.settlementBatches.riderPaid ?? 0} batch</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        <QuickStatsCard
+          title="Quick stats"
+          subtitle="Key metrics summary"
+          rows={[
+            { label: 'Avg order value', value: formatCurrency(derived.avgOrderValue) },
+            { label: 'Orders per day', value: derived.ordersPerDay.toFixed(1) },
+            { label: 'Revenue per day', value: formatCurrency(derived.revenuePerDay) },
+            { label: 'Online riders', value: String(delivery?.onlineRiders ?? 0) },
+            { label: 'Capture rate', value: `${derived.capturedRatio}%` },
+            { label: 'Avg delivery time', value: `${delivery?.avgDeliveryTimeMinutes ?? 0} min` },
+          ]}
+        />
 
-        {/* Tab 2: Sales & Volume (analytics summary details) */}
-        <TabsContent value="revenue" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Range Revenue</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{formatCurrency(Number(sales?.totalRevenue ?? 0))}</CardContent></Card>
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Delivered Orders</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{String(sales?.deliveredOrders ?? 0)}</CardContent></Card>
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Avg Order Value</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{formatCurrency(Number(sales?.avgOrderValue ?? 0))}</CardContent></Card>
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Online Riders</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{String(delivery?.onlineRiders ?? 0)}</CardContent></Card>
-          </div>
+        <QuickStatsCard
+          title="Pending actions"
+          subtitle="Requires admin attention"
+          rows={[
+            {
+              label: 'Rider verifications',
+              value: String(stats?.riders.pendingApproval ?? 0),
+            },
+            {
+              label: 'Restaurant approvals',
+              value: String(stats?.restaurants.pendingApproval ?? 0),
+            },
+            {
+              label: 'Refund tickets',
+              value: String(stats?.support.pendingRefundTickets ?? 0),
+            },
+            {
+              label: 'Pending rider payout',
+              value: formatCurrency(finance?.pendingRiderPayout.grossEarnings ?? 0),
+            },
+            {
+              label: 'Pending rest. settlement',
+              value: formatCurrency(finance?.pendingRestaurantSettlement.netPayable ?? 0),
+            },
+            {
+              label: 'Tax collected',
+              value: formatCurrency(Number(tax?.totalTaxCollected ?? 0)),
+            },
+          ]}
+        />
 
-          <Card className="border-black/5 shadow-sm">
-            <CardHeader><CardTitle className="text-sm font-bold">Revenue by Day</CardTitle></CardHeader>
-            <CardContent>
-              <MiniBarChart data={(sales?.revenueByDay as Array<{ _id: string; revenue: number }>) ?? []} />
+        <Card className="border-black/5 bg-white shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold">Operations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {[
+              { label: 'Review pending riders', href: '/riders?status=pending', count: stats?.riders.pendingApproval },
+              { label: 'Manage restaurants', href: '/restaurants', count: stats?.restaurants.pendingApproval },
+              { label: 'View all orders', href: '/orders' },
+              { label: 'Finance & payouts', href: '/finance' },
+              { label: 'Support tickets', href: '/support', count: stats?.support.pendingRefundTickets },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="flex items-center justify-between rounded-lg px-2 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              >
+                <span>{item.label}</span>
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  {item.count !== undefined && item.count > 0 ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                      {item.count}
+                    </span>
+                  ) : null}
+                  <ChevronRight className="size-4" />
+                </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Finance footer row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: 'Platform GMV', value: formatCurrency(finance?.platform.totalGmv ?? 0) },
+          { label: 'Commission earned', value: formatCurrency(finance?.platform.totalCommission ?? 0) },
+          { label: 'Delivery fees', value: formatCurrency(finance?.platform.totalDeliveryFees ?? 0) },
+          { label: 'Orders today', value: String(stats?.orders.today ?? 0) },
+        ].map((item) => (
+          <Card key={item.label} className="border-black/5 bg-white shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {item.label}
+              </p>
+              <p className="mt-1 text-xl font-black text-ink">{item.value}</p>
             </CardContent>
           </Card>
+        ))}
+      </div>
 
-          <Card className="border-black/5 shadow-sm">
-            <CardHeader><CardTitle className="text-sm font-bold">Orders Status Breakdown</CardTitle></CardHeader>
-            <CardContent className="flex flex-wrap gap-2.5 mt-2">
-              {((orders?.byStatus as Array<{ _id: string; count: number }>) ?? []).map((s) => (
-                <span key={s._id} className="rounded-lg bg-zinc-100 hover:bg-zinc-200 transition px-3 py-1.5 text-xs font-bold text-zinc-700">
-                  {s._id}: {s.count}
-                </span>
+      {topRestaurants.length > 0 ? (
+        <Card className="mt-6 border-black/5 bg-white shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold">Top performing restaurants</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y divide-zinc-100">
+              {topRestaurants.slice(0, 5).map((r, i) => (
+                <div key={i} className="flex items-center justify-between py-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-zinc-100 text-xs font-black text-zinc-600">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="font-bold text-ink">{r.restaurantName ?? 'Restaurant'}</p>
+                      <p className="text-xs text-muted-foreground">{r.orders} orders</p>
+                    </div>
+                  </div>
+                  <span className="font-black text-brand">{formatCurrency(r.revenue)}</span>
+                </div>
               ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab 3: Detailed platform finance and payout summaries (Additional Stats) */}
-        <TabsContent value="finance" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              label="Gross GMV (Platform)"
-              value={formatCurrency(finance?.platform.totalGmv ?? 0)}
-              icon={LineChart}
-            />
-            <StatCard
-              label="Platform Commission"
-              value={formatCurrency(finance?.platform.totalCommission ?? 0)}
-              icon={Percent}
-            />
-            <StatCard
-              label="Platform Fees Collected"
-              value={formatCurrency(finance?.platform.totalPlatformFees ?? 0)}
-              icon={PiggyBank}
-            />
-            <StatCard
-              label="Accrued Delivery Fees"
-              value={formatCurrency(finance?.platform.totalDeliveryFees ?? 0)}
-              icon={Truck}
-            />
-            <StatCard
-              label="Rider Accrued Earnings"
-              value={formatCurrency(finance?.platform.totalRiderEarningsAccrued ?? 0)}
-              icon={Bike}
-            />
-            <StatCard
-              label="Restaurant Accrued Earnings"
-              value={formatCurrency(finance?.platform.totalRestaurantPayableAccrued ?? 0)}
-              icon={Store}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 mt-4">
-            <Card className="border-black/5 shadow-sm bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Pending Restaurant Settlements</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-end justify-between mt-2">
-                <div>
-                  <div className="text-3xl font-black text-[#e23744]">{formatCurrency(finance?.pendingRestaurantSettlement.netPayable ?? 0)}</div>
-                  <p className="text-xs text-zinc-500 font-semibold mt-1">Pending payout to restaurants</p>
-                </div>
-                <span className="text-xs font-bold text-zinc-600 bg-zinc-150 px-2.5 py-1 rounded">
-                  {finance?.pendingRestaurantSettlement.orderCount ?? 0} orders
-                </span>
-              </CardContent>
-            </Card>
-
-            <Card className="border-black/5 shadow-sm bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Pending Rider Payouts</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-end justify-between mt-2">
-                <div>
-                  <div className="text-3xl font-black text-[#e23744]">{formatCurrency(finance?.pendingRiderPayout.grossEarnings ?? 0)}</div>
-                  <p className="text-xs text-zinc-500 font-semibold mt-1">Accrued rider payouts pending</p>
-                </div>
-                <span className="text-xs font-bold text-zinc-600 bg-zinc-150 px-2.5 py-1 rounded">
-                  {finance?.pendingRiderPayout.deliveryCount ?? 0} deliveries
-                </span>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Tab 4: GST / Tax (tax details) */}
-        <TabsContent value="gst" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Tax Collected</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{formatCurrency(Number(tax?.totalTaxCollected ?? 0))}</CardContent></Card>
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Taxable Subtotal</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{formatCurrency(Number(tax?.taxableSubtotal ?? 0))}</CardContent></Card>
-            <Card className="border-black/5 shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">Effective Rate</CardTitle></CardHeader><CardContent className="text-2xl font-black text-ink">{String(tax?.effectiveTaxRate ?? 0)}%</CardContent></Card>
-          </div>
-          
-          <Card className="border-black/5 shadow-sm">
-            <CardHeader><CardTitle className="text-sm font-bold">Tax by Day</CardTitle></CardHeader>
-            <CardContent>
-              <MiniBarChart data={(tax?.taxByDay as Array<{ _id: string; taxCollected: number }>) ?? []} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
     </PageShell>
   );
 }

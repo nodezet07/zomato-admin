@@ -37,6 +37,7 @@ export function PlatformPage() {
       updatePlatformPolicy({
         defaultRestaurantCommissionPercent: Number(form.commission ?? policy?.defaultRestaurantCommissionPercent),
         defaultPlatformFeePercent: Number(form.platformFee ?? policy?.defaultPlatformFeePercent),
+        maxPlatformFee: Number(form.maxPlatformFee ?? policy?.maxPlatformFee),
         riderBaseFare: Number(form.riderBase ?? policy?.riderBaseFare),
         riderPerKmRate: Number(form.riderKm ?? policy?.riderPerKmRate),
         riderMinWithdrawalAmount: Number(form.minWithdraw ?? policy?.riderMinWithdrawalAmount),
@@ -107,11 +108,19 @@ export function PlatformPage() {
                   />
                 </div>
                 <div>
-                  <Label>Platform fee %</Label>
+                  <Label>Platform fee % (packaging charge)</Label>
                   <Input
                     type="number"
                     defaultValue={policy.defaultPlatformFeePercent}
                     onChange={(e) => setForm((f) => ({ ...f, platformFee: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Max platform fee cap (₹)</Label>
+                  <Input
+                    type="number"
+                    defaultValue={policy.maxPlatformFee}
+                    onChange={(e) => setForm((f) => ({ ...f, maxPlatformFee: e.target.value }))}
                   />
                 </div>
                 <div>
