@@ -166,7 +166,7 @@ export function RidersPage() {
       title="Riders"
       subtitle="Review KYC documents, bank details, and approve or reject rider applications"
     >
-      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Total riders"
           value={counts.loading ? '…' : counts.all}
@@ -209,9 +209,9 @@ export function RidersPage() {
       </div>
 
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {isLoading && (
-            <div className="col-span-2 text-center py-12 text-muted bg-white border border-black/5 rounded-xl">Loading riders…</div>
+            <div className="text-center py-12 text-muted bg-white border border-black/5 rounded-xl sm:col-span-2">Loading riders…</div>
           )}
           {data?.riders.map((r) => (
             <Card key={r._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
@@ -270,7 +270,7 @@ export function RidersPage() {
             </Card>
           ))}
           {!isLoading && !data?.riders.length && (
-            <div className="col-span-2 text-center py-12 text-muted bg-white border border-black/5 rounded-xl">No riders found.</div>
+            <div className="text-center py-12 text-muted bg-white border border-black/5 rounded-xl sm:col-span-2">No riders found.</div>
           )}
         </div>
       ) : (

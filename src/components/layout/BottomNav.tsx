@@ -7,7 +7,6 @@ import {
   ClipboardList,
   Wallet,
   Settings2,
-  MapPin,
   RotateCcw,
   BookOpen,
   Headphones,
@@ -42,7 +41,7 @@ const moreLinks = [
   { to: '/refunds', label: 'Refunds', icon: RotateCcw },
   { to: '/audit', label: 'Audit Log', icon: ScrollText },
   { to: '/support', label: 'Support', icon: Headphones },
-  { to: '/cities', label: 'Cities', icon: MapPin },
+  // { to: '/cities', label: 'Cities', icon: MapPin },
   { to: '/ledger', label: 'Ledger', icon: BookOpen },
   { to: '/platform', label: 'Config', icon: Settings2 },
 ] as const;

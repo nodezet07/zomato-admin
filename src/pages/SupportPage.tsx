@@ -6,6 +6,8 @@ import { PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,7 @@ import { formatDate } from '@/lib/utils';
 
 export function SupportPage() {
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -98,39 +101,75 @@ export function SupportPage() {
         </select>
       }
     >
-      <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ticket</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted">Loading…</TableCell></TableRow>
-            )}
-            {data?.tickets.map((t) => (
-              <TableRow key={t._id}>
-                <TableCell className="font-mono text-xs">{t.ticketNumber}</TableCell>
-                <TableCell><Badge variant="secondary">{t.issueType}</Badge></TableCell>
-                <TableCell>{t.customerId?.fullName ?? '—'}</TableCell>
-                <TableCell className="max-w-xs truncate">{t.description}</TableCell>
-                <TableCell>{t.status}</TableCell>
-                <TableCell className="text-sm text-muted">{formatDate(t.createdAt)}</TableCell>
-                <TableCell className="text-right">
-                  <Button size="sm" variant="outline" onClick={() => setSelectedId(t._id)}>View</Button>
-                </TableCell>
+      {isMobile ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {isLoading && (
+            <div className="rounded-xl border border-black/5 bg-white py-8 text-center text-muted sm:col-span-2">
+              Loading…
+            </div>
+          )}
+          {data?.tickets.map((t) => (
+            <Card key={t._id} className="overflow-hidden border-black/5 bg-white shadow-sm">
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-mono text-[11px] font-bold text-muted">{t.ticketNumber}</p>
+                    <p className="mt-1 text-sm font-semibold text-ink">{t.customerId?.fullName ?? '—'}</p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0">{t.issueType}</Badge>
+                </div>
+                <p className="line-clamp-2 text-sm text-zinc-700">{t.description}</p>
+                <div className="flex items-center justify-between border-t border-zinc-100 pt-2 text-xs">
+                  <span className="font-semibold">{t.status}</span>
+                  <span className="text-muted">{formatDate(t.createdAt)}</span>
+                </div>
+                <Button size="sm" variant="outline" className="w-full" onClick={() => setSelectedId(t._id)}>
+                  View
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+          {!isLoading && !data?.tickets.length && (
+            <div className="rounded-xl border border-black/5 bg-white py-8 text-center text-muted sm:col-span-2">
+              No support tickets found.
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-black/5 bg-white">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ticket</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {isLoading && (
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted">Loading…</TableCell></TableRow>
+              )}
+              {data?.tickets.map((t) => (
+                <TableRow key={t._id}>
+                  <TableCell className="font-mono text-xs">{t.ticketNumber}</TableCell>
+                  <TableCell><Badge variant="secondary">{t.issueType}</Badge></TableCell>
+                  <TableCell>{t.customerId?.fullName ?? '—'}</TableCell>
+                  <TableCell className="max-w-xs truncate">{t.description}</TableCell>
+                  <TableCell>{t.status}</TableCell>
+                  <TableCell className="text-sm text-muted">{formatDate(t.createdAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="outline" onClick={() => setSelectedId(t._id)}>View</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {data && data.pagination.totalPages > 1 && (
         <div className="mt-4 flex gap-2">

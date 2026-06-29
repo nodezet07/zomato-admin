@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Wallet,
   Settings2,
-  MapPin,
   RotateCcw,
   BookOpen,
   Shield,
@@ -40,7 +39,7 @@ const links = [
   { to: '/refunds', label: 'Refunds', icon: RotateCcw, end: false },
   { to: '/audit', label: 'Audit Log', icon: ScrollText, end: false },
   { to: '/support', label: 'Support', icon: Headphones, end: false },
-  { to: '/cities', label: 'Cities & Zones', icon: MapPin, end: false },
+  // { to: '/cities', label: 'Cities & Zones', icon: MapPin, end: false },
   { to: '/ledger', label: 'Ledger', icon: BookOpen, end: false },
   { to: '/platform', label: 'Platform Config', icon: Settings2, end: false },
 ];

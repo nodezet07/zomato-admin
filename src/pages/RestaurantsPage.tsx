@@ -153,9 +153,9 @@ export function RestaurantsPage() {
       }
     >
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {isLoading && (
-            <div className="col-span-2 text-center text-muted py-8 bg-white border border-black/5 rounded-xl">Loading…</div>
+            <div className="text-center text-muted py-8 bg-white border border-black/5 rounded-xl sm:col-span-2">Loading…</div>
           )}
           {data?.restaurants.map((r) => (
             <Card key={r._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
@@ -208,7 +208,7 @@ export function RestaurantsPage() {
             </Card>
           ))}
           {!isLoading && !data?.restaurants.length && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No restaurants found.</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl sm:col-span-2">No restaurants found.</div>
           )}
         </div>
       ) : (
