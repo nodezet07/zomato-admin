@@ -29,11 +29,11 @@ import {
 } from '@/components/ui/sheet';
 
 const primaryLinks = [
-  { to: '/', label: 'Home', icon: LayoutDashboard, end: true },
-  { to: '/users', label: 'Users', icon: Users, end: false },
-  { to: '/restaurants', label: 'Restaurants', icon: Store, end: false },
-  { to: '/riders', label: 'Riders', icon: Bike, end: false },
-  { to: '/orders', label: 'Orders', icon: ClipboardList, end: false },
+  { to: '/', label: 'Home', shortLabel: 'Home', icon: LayoutDashboard, end: true },
+  { to: '/users', label: 'Users', shortLabel: 'Users', icon: Users, end: false },
+  { to: '/restaurants', label: 'Restaurants', shortLabel: 'Shops', icon: Store, end: false },
+  { to: '/riders', label: 'Riders', shortLabel: 'Riders', icon: Bike, end: false },
+  { to: '/orders', label: 'Orders', shortLabel: 'Orders', icon: ClipboardList, end: false },
 ] as const;
 
 const moreLinks = [
@@ -65,23 +65,23 @@ export function BottomNav() {
   return (
     <nav
       className="md:hidden shrink-0 border-t border-black/5 bg-white/95 backdrop-blur-md z-30"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 4px)' }}
     >
-      <div className="grid h-14 grid-cols-6 items-stretch">
-        {primaryLinks.map(({ to, label, end, icon: Icon }) => (
+      <div className="grid h-[52px] grid-cols-6 items-stretch">
+        {primaryLinks.map(({ to, shortLabel, end, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive }) =>
               [
-                'flex flex-col items-center justify-center gap-0.5 px-0.5 py-1 text-[9px] font-bold transition',
+                'flex flex-col items-center justify-center gap-0.5 px-0.5 py-1 text-[8px] font-bold transition min-w-0',
                 isActive ? 'text-brand' : 'text-muted-foreground hover:text-ink',
               ].join(' ')
             }
           >
-            <Icon className="size-[18px] shrink-0" strokeWidth={2.25} />
-            <span className="w-full truncate text-center">{label}</span>
+            <Icon className="size-[17px] shrink-0" strokeWidth={2.25} />
+            <span className="w-full truncate text-center leading-none">{shortLabel}</span>
           </NavLink>
         ))}
 
@@ -113,7 +113,7 @@ export function BottomNav() {
                       'flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-bold transition',
                       isActive
                         ? 'border-brand/30 bg-brand/5 text-brand'
-                        : 'border-black/5 text-ink hover:bg-black/[0.02]',
+                        : 'border-black/5 text-ink hover:bg-black/2',
                     ].join(' ')
                   }
                 >

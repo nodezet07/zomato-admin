@@ -81,9 +81,9 @@ export function RefundsPage() {
   return (
     <PageShell eyebrow="Disputes" title="Refund Management" subtitle="Approve full/partial refunds or reject requests">
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {isLoading && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
           )}
           {data?.tickets.map((t) => (
             <Card key={t._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
@@ -115,7 +115,7 @@ export function RefundsPage() {
             </Card>
           ))}
           {!isLoading && !data?.tickets.length && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No open refund tickets</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No open refund tickets</div>
           )}
         </div>
       ) : (

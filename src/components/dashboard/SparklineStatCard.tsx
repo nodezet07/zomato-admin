@@ -66,21 +66,21 @@ export function SparklineStatCard({
       )}
       onClick={onClick}
     >
-      <CardContent className="p-4 pb-0">
+      <CardContent className="p-3 pb-0 sm:p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <dt className="text-sm font-semibold text-ink">
-              {label}
+            <dt className="text-xs font-semibold text-ink sm:text-sm leading-snug">
+              <span className="line-clamp-2">{label}</span>
               {sublabel ? (
                 <span className="font-normal text-muted-foreground"> ({sublabel})</span>
               ) : null}
             </dt>
-            <div className="mt-1 flex items-baseline justify-between gap-2">
-              <dd className="text-2xl font-black tracking-tight text-ink">{value}</dd>
-              <dd className="flex shrink-0 items-center gap-1 text-xs">
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <dd className="text-lg font-black tracking-tight text-ink sm:text-2xl break-all">{value}</dd>
+              <dd className="flex shrink-0 items-center gap-1 text-[10px] sm:text-xs">
                 <span
                   className={cn(
-                    'rounded-full px-2 py-0.5 font-bold',
+                    'rounded-full px-1.5 py-0.5 font-bold sm:px-2',
                     trend.positive
                       ? 'bg-emerald-50 text-emerald-700'
                       : 'bg-red-50 text-red-600',
@@ -92,21 +92,21 @@ export function SparklineStatCard({
             </div>
             <p
               className={cn(
-                'mt-0.5 text-[11px] font-medium',
+                'mt-0.5 text-[10px] font-medium sm:text-[11px] truncate',
                 trend.positive ? 'text-emerald-600' : 'text-red-600',
               )}
             >
-              {changeText} vs prior period
+              {changeText} vs prior
             </p>
           </div>
           {Icon ? (
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100">
-              <Icon className="size-4 text-muted-foreground" />
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 sm:size-9">
+              <Icon className="size-3.5 text-muted-foreground sm:size-4" />
             </div>
           ) : null}
         </div>
 
-        <div className="mt-3 h-14 overflow-hidden">
+        <div className="mt-2 h-12 overflow-hidden sm:mt-3 sm:h-14">
           <ChartContainer
             className="h-full w-full"
             config={{

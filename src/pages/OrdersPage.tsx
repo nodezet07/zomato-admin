@@ -72,22 +72,22 @@ export function OrdersPage() {
       }
     >
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {isLoading && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
           )}
           {data?.orders.map((o) => (
             <Card key={o._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
               <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
+                  <div className="min-w-0">
                     <p className="font-mono text-xs font-black text-brand bg-brand/5 px-2 py-0.5 rounded-md inline-block">{o.orderNumber}</p>
-                    <p className="text-xs text-muted-foreground mt-1.5"><span className="font-bold">Customer:</span> {o.customerId?.fullName ?? '—'}</p>
-                    <p className="text-xs text-muted-foreground"><span className="font-bold">Restaurant:</span> {o.restaurantId?.restaurantName ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5 truncate"><span className="font-bold">Customer:</span> {o.customerId?.fullName ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground truncate"><span className="font-bold">Restaurant:</span> {o.restaurantId?.restaurantName ?? '—'}</p>
                   </div>
-                  <Badge variant="secondary">{o.orderStatus}</Badge>
+                  <Badge variant="secondary" className="self-start shrink-0 text-[10px]">{o.orderStatus.replace(/_/g, ' ')}</Badge>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-xs pt-2 border-t border-zinc-100">
+                <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-zinc-100 sm:grid-cols-3">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Rider</p>
                     <p className="font-mono text-xs text-zinc-700">{o.riderId?.riderCode ?? '—'}</p>
@@ -96,7 +96,7 @@ export function OrdersPage() {
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Payment</p>
                     <p className="font-semibold text-zinc-700 capitalize">{o.paymentMethod.toLowerCase()}</p>
                   </div>
-                  <div className="space-y-1 text-right">
+                  <div className="space-y-1 col-span-2 sm:col-span-1 sm:text-right">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total</p>
                     <p className="font-black text-brand">{formatCurrency(o.grandTotal)}</p>
                   </div>
@@ -118,7 +118,7 @@ export function OrdersPage() {
             </Card>
           ))}
           {!isLoading && !data?.orders.length && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No orders found.</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No orders found.</div>
           )}
         </div>
       ) : (

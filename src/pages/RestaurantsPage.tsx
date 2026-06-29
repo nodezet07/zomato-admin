@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { CheckCircle2, Clock, Store, XCircle } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
+import { StatCard, STATS_GRID_CLASS } from '@/components/dashboard/StatCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,9 +36,34 @@ import {
 const DEFAULT_LAT = 19.076;
 const DEFAULT_LNG = 72.8777;
 
+function useRestaurantStatusCounts() {
+  const statusQueries = useQueries({
+    queries: ['pending', 'approved', 'rejected'].map((status) => ({
+      queryKey: ['admin-restaurants-count', status],
+      queryFn: () => fetchRestaurants(1, status),
+      staleTime: 60_000,
+    })),
+  });
+
+  const allQ = useQuery({
+    queryKey: ['admin-restaurants-count', 'all'],
+    queryFn: () => fetchRestaurants(1),
+    staleTime: 60_000,
+  });
+
+  return {
+    all: allQ.data?.pagination.total ?? 0,
+    pending: statusQueries[0]?.data?.pagination.total ?? 0,
+    approved: statusQueries[1]?.data?.pagination.total ?? 0,
+    rejected: statusQueries[2]?.data?.pagination.total ?? 0,
+    loading: allQ.isLoading || statusQueries.some((r) => r.isLoading),
+  };
+}
+
 export function RestaurantsPage() {
   const qc = useQueryClient();
   const isMobile = useIsMobile();
+  const counts = useRestaurantStatusCounts();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<string>('');
   const [createOpen, setCreateOpen] = useState(false);
@@ -68,6 +95,7 @@ export function RestaurantsPage() {
     onSuccess: () => {
       toast.success('Restaurant approved');
       qc.invalidateQueries({ queryKey: ['admin-restaurants'] });
+      qc.invalidateQueries({ queryKey: ['admin-restaurants-count'] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -77,6 +105,7 @@ export function RestaurantsPage() {
     onSuccess: () => {
       toast.success('Restaurant rejected');
       qc.invalidateQueries({ queryKey: ['admin-restaurants'] });
+      qc.invalidateQueries({ queryKey: ['admin-restaurants-count'] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -88,6 +117,7 @@ export function RestaurantsPage() {
       toast.success('Commission updated');
       setCommissionDialog(null);
       qc.invalidateQueries({ queryKey: ['admin-restaurants'] });
+      qc.invalidateQueries({ queryKey: ['admin-restaurants-count'] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -118,6 +148,7 @@ export function RestaurantsPage() {
       setLongitude(String(DEFAULT_LNG));
       setAutoApprove(true);
       qc.invalidateQueries({ queryKey: ['admin-restaurants'] });
+      qc.invalidateQueries({ queryKey: ['admin-restaurants-count'] });
     },
     onError: (e: Error) => {
       toast.error(e.message || 'Failed to create restaurant');
@@ -146,31 +177,71 @@ export function RestaurantsPage() {
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
           </select>
-          <Button className="bg-brand" onClick={() => setCreateOpen(true)}>
+          <Button className="w-full sm:w-auto bg-brand" onClick={() => setCreateOpen(true)}>
             Create restaurant
           </Button>
         </div>
       }
     >
+      <div className={`mb-6 ${STATS_GRID_CLASS}`}>
+        <StatCard
+          label="Total shops"
+          value={counts.loading ? '…' : counts.all}
+          hint="Registered partners"
+          icon={Store}
+          accent="brand"
+          onClick={() => { setStatus(''); setPage(1); }}
+        />
+        <StatCard
+          label="Pending"
+          value={counts.loading ? '…' : counts.pending}
+          hint="Awaiting approval"
+          icon={Clock}
+          accent="warning"
+          onClick={() => { setStatus('pending'); setPage(1); }}
+        />
+        <StatCard
+          label="Approved"
+          value={counts.loading ? '…' : counts.approved}
+          hint="Live on platform"
+          icon={CheckCircle2}
+          accent="success"
+          onClick={() => { setStatus('approved'); setPage(1); }}
+        />
+        <StatCard
+          label="Rejected"
+          value={counts.loading ? '…' : counts.rejected}
+          hint="Not active"
+          icon={XCircle}
+          accent="danger"
+          onClick={() => { setStatus('rejected'); setPage(1); }}
+        />
+      </div>
+
       {isMobile ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3">
           {isLoading && (
-            <div className="text-center text-muted py-8 bg-white border border-black/5 rounded-xl sm:col-span-2">Loading…</div>
+            <div className="text-center text-muted py-8 bg-white border border-black/5 rounded-xl">Loading…</div>
           )}
           {data?.restaurants.map((r) => (
             <Card key={r._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
               <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-ink text-sm">{r.restaurantName}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Owner: {r.ownerId?.fullName ?? '—'}</p>
-                    <p className="text-[11px] text-muted-foreground">{r.ownerId?.email}</p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-ink text-sm truncate">{r.restaurantName}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      Owner: {r.ownerId?.fullName ?? '—'}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground truncate">{r.ownerId?.email}</p>
                   </div>
-                  <Badge variant={r.restaurantStatus === 'approved' ? 'default' : 'secondary'}>
+                  <Badge
+                    variant={r.restaurantStatus === 'approved' ? 'default' : 'secondary'}
+                    className="self-start shrink-0 capitalize"
+                  >
                     {r.restaurantStatus}
                   </Badge>
                 </div>
-                <div className="flex justify-between items-center text-xs pt-2 border-t border-zinc-100">
+                <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-zinc-100">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Commission</p>
                     <p className="font-semibold text-zinc-700">{r.platformCommissionPercentage ?? 15}%</p>
@@ -180,16 +251,26 @@ export function RestaurantsPage() {
                     <p className="font-semibold text-zinc-700">{r.settlementCycle ?? 'WEEKLY'}</p>
                   </div>
                 </div>
-                <div className="pt-2 flex justify-end gap-2">
+                <div className="pt-2 flex flex-wrap gap-2">
                   {r.restaurantStatus === 'pending' && (
                     <>
-                      <Button size="sm" onClick={() => approveMut.mutate(r._id)}>Approve</Button>
-                      <Button size="sm" variant="outline" onClick={() => rejectMut.mutate(r._id)}>Reject</Button>
+                      <Button size="sm" className="flex-1 min-w-[100px]" onClick={() => approveMut.mutate(r._id)}>
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 min-w-[100px]"
+                        onClick={() => rejectMut.mutate(r._id)}
+                      >
+                        Reject
+                      </Button>
                     </>
                   )}
                   <Button
                     size="sm"
                     variant="outline"
+                    className="flex-1 min-w-[100px]"
                     onClick={() => {
                       setCommissionDialog({
                         id: r._id,
@@ -208,7 +289,7 @@ export function RestaurantsPage() {
             </Card>
           ))}
           {!isLoading && !data?.restaurants.length && (
-            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl sm:col-span-2">No restaurants found.</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No restaurants found.</div>
           )}
         </div>
       ) : (
@@ -277,9 +358,21 @@ export function RestaurantsPage() {
       )}
 
       {data && data.pagination.totalPages > 1 && (
-        <div className="mt-4 flex gap-2">
-          <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
-          <Button variant="outline" disabled={page >= data.pagination.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Prev
+          </Button>
+          <span className="text-xs font-semibold text-muted-foreground">
+            Page {page} of {data.pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= data.pagination.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
 
@@ -355,7 +448,7 @@ export function RestaurantsPage() {
                   placeholder="Mumbai"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="latitude">Latitude</Label>
                   <Input

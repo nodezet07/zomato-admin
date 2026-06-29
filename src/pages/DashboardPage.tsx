@@ -13,6 +13,7 @@ import {
   SparklineStatCard,
   type SparklinePoint,
 } from '@/components/dashboard/SparklineStatCard';
+import { STATS_GRID_CLASS } from '@/components/dashboard/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -114,7 +115,7 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <PageShell title={pageTitle} subtitle="Loading platform overview…">
-        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className={STATS_GRID_CLASS}>
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-36 rounded-xl" />
           ))}
@@ -151,14 +152,14 @@ export function DashboardPage() {
       title={pageTitle}
       subtitle={pageSubtitle}
       action={
-        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-black/10 bg-white p-1 shadow-sm">
+        <div className="flex w-full items-center gap-1 rounded-xl border border-black/10 bg-white p-1 shadow-sm sm:w-auto">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => setDays(opt.value)}
               className={cn(
-                'rounded-lg px-3 py-1.5 text-xs font-bold transition',
+                'flex-1 rounded-lg px-2 py-2 text-[11px] font-bold transition sm:flex-none sm:px-3 sm:py-1.5 sm:text-xs',
                 days === opt.value
                   ? 'bg-brand text-white shadow-sm'
                   : 'text-zinc-600 hover:bg-zinc-50',
@@ -171,7 +172,7 @@ export function DashboardPage() {
       }
     >
       {/* KPI sparkline row */}
-      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className={`mb-6 ${STATS_GRID_CLASS}`}>
         <SparklineStatCard
           label="Range revenue"
           sublabel={`${days}d`}
@@ -208,7 +209,7 @@ export function DashboardPage() {
       </div>
 
       {/* Platform snapshot row */}
-      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className={`mb-6 ${STATS_GRID_CLASS}`}>
         <SparklineStatCard
           label="Total users"
           value={(stats?.users.total ?? 0).toLocaleString()}
@@ -244,7 +245,7 @@ export function DashboardPage() {
       </div>
 
       {/* Main charts */}
-      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <RevenueAreaChart data={revenueChartData} days={daysNum} />
         <DonutBreakdownChart
           title="Orders by status"
@@ -254,7 +255,7 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <HorizontalBarList
           title="Revenue by payment method"
           subtitle="How customers pay"
@@ -269,7 +270,7 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <QuickStatsCard
           title="Quick stats"
           subtitle="Key metrics summary"
@@ -329,7 +330,7 @@ export function DashboardPage() {
               <Link
                 key={item.href}
                 to={item.href}
-                className="flex items-center justify-between rounded-lg px-2 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                className="flex items-center justify-between rounded-lg px-2 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 active:bg-zinc-100 min-h-[44px]"
               >
                 <span>{item.label}</span>
                 <span className="flex items-center gap-2 text-muted-foreground">
@@ -347,7 +348,7 @@ export function DashboardPage() {
       </div>
 
       {/* Finance footer row */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={STATS_GRID_CLASS}>
         {[
           { label: 'Platform GMV', value: formatCurrency(finance?.platform.totalGmv ?? 0) },
           { label: 'Commission earned', value: formatCurrency(finance?.platform.totalCommission ?? 0) },
@@ -355,11 +356,11 @@ export function DashboardPage() {
           { label: 'Orders today', value: String(stats?.orders.today ?? 0) },
         ].map((item) => (
           <Card key={item.label} className="border-black/5 bg-white shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground sm:text-[10px]">
                 {item.label}
               </p>
-              <p className="mt-1 text-xl font-black text-ink">{item.value}</p>
+              <p className="mt-1 text-lg font-black text-ink sm:text-xl break-all">{item.value}</p>
             </CardContent>
           </Card>
         ))}
@@ -373,17 +374,17 @@ export function DashboardPage() {
           <CardContent>
             <div className="divide-y divide-zinc-100">
               {topRestaurants.slice(0, 5).map((r, i) => (
-                <div key={i} className="flex items-center justify-between py-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-7 items-center justify-center rounded-full bg-zinc-100 text-xs font-black text-zinc-600">
+                <div key={i} className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-black text-zinc-600">
                       {i + 1}
                     </span>
-                    <div>
-                      <p className="font-bold text-ink">{r.restaurantName ?? 'Restaurant'}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-ink truncate">{r.restaurantName ?? 'Restaurant'}</p>
                       <p className="text-xs text-muted-foreground">{r.orders} orders</p>
                     </div>
                   </div>
-                  <span className="font-black text-brand">{formatCurrency(r.revenue)}</span>
+                  <span className="font-black text-brand shrink-0 sm:text-right">{formatCurrency(r.revenue)}</span>
                 </div>
               ))}
             </div>

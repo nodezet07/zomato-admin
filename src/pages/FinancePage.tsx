@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { PageShell } from '@/components/layout/PageShell';
+import { STATS_GRID_CLASS } from '@/components/dashboard/StatCard';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -233,7 +234,7 @@ export function FinancePage() {
       <Button variant="outline" size="sm" onClick={exportCsv}>Export CSV</Button>
     }>
 
-      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`mb-6 ${STATS_GRID_CLASS}`}>
 
         <Card className="border-black/5 bg-white shadow-sm p-0">
 
@@ -289,15 +290,15 @@ export function FinancePage() {
 
       <Tabs defaultValue="pending" className="w-full">
 
-        <TabsList className="flex flex-wrap h-auto w-full bg-muted p-1">
+        <TabsList className="grid grid-cols-2 gap-1 h-auto w-full bg-muted p-1 sm:flex sm:flex-wrap">
 
-          <TabsTrigger value="pending" className="flex-1 min-w-[110px]">Create batches</TabsTrigger>
+          <TabsTrigger value="pending" className="text-xs sm:flex-1 sm:min-w-[110px]">Create batches</TabsTrigger>
 
-          <TabsTrigger value="settlements" className="flex-1 min-w-[110px]">Settlements</TabsTrigger>
+          <TabsTrigger value="settlements" className="text-xs sm:flex-1 sm:min-w-[110px]">Settlements</TabsTrigger>
 
-          <TabsTrigger value="payouts" className="flex-1 min-w-[110px]">Rider payouts</TabsTrigger>
+          <TabsTrigger value="payouts" className="text-xs sm:flex-1 sm:min-w-[110px]">Rider payouts</TabsTrigger>
 
-          <TabsTrigger value="withdrawals" className="flex-1 min-w-[110px]">Withdrawals</TabsTrigger>
+          <TabsTrigger value="withdrawals" className="text-xs sm:flex-1 sm:min-w-[110px]">Withdrawals</TabsTrigger>
 
         </TabsList>
 
@@ -314,7 +315,7 @@ export function FinancePage() {
             </div>
 
             {isMobile ? (
-              <div className="grid grid-cols-2 gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4">
                 {pendingRestQ.data?.restaurants.map((row) => (
                   <Card key={row.restaurantId} className="border-black/5 overflow-hidden shadow-sm bg-white">
                     <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
@@ -378,7 +379,7 @@ export function FinancePage() {
             </div>
 
             {isMobile ? (
-              <div className="grid grid-cols-2 gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4">
                 {pendingRiderQ.data?.riders.map((row) => (
                   <Card key={row.riderId} className="border-black/5 overflow-hidden shadow-sm bg-white">
                     <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
@@ -440,7 +441,7 @@ export function FinancePage() {
           <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
 
             {isMobile ? (
-              <div className="grid grid-cols-2 gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4">
                 {settlementsQ.data?.settlements.map((row) => (
                   <Card key={row._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
                     <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
@@ -508,7 +509,7 @@ export function FinancePage() {
           <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
 
             {isMobile ? (
-              <div className="grid grid-cols-2 gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4">
                 {payoutsQ.data?.payouts.map((row) => (
                   <Card key={row._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
                     <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
@@ -572,7 +573,7 @@ export function FinancePage() {
           <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
 
             {isMobile ? (
-              <div className="grid grid-cols-2 gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4">
                 {withdrawalsQ.data?.requests.map((row) => (
                   <Card key={row._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
                     <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">

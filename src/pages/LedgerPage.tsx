@@ -53,9 +53,9 @@ export function LedgerPage() {
       }
     >
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {isLoading && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
           )}
           {data?.entries.map((e) => (
             <Card key={e._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
@@ -76,7 +76,7 @@ export function LedgerPage() {
             </Card>
           ))}
           {!isLoading && !data?.entries.length && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No ledger entries found.</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No ledger entries found.</div>
           )}
         </div>
       ) : (

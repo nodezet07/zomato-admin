@@ -25,15 +25,15 @@ export function UserDropdown() {
         type="button"
         variant="outline"
         size="sm"
-        className="md:hidden font-semibold text-rose-600 border-rose-200 hover:bg-rose-50"
+        className="md:hidden h-8 px-2 font-semibold text-rose-600 border-rose-200 hover:bg-rose-50 shrink-0"
         onClick={handleLogout}
+        aria-label="Log out"
       >
         <LogOut className="size-4 shrink-0" />
-        <span className="ml-1">Log out</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="font-semibold max-w-[140px] truncate">
+          <Button variant="outline" size="sm" className="font-semibold max-w-[100px] sm:max-w-[140px] truncate h-8 px-2 sm:px-3">
             {admin?.name ?? 'Admin'}
           </Button>
         </DropdownMenuTrigger>

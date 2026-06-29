@@ -25,12 +25,12 @@ export function RevenueAreaChart({ data, days }: { data: Point[]; days: number }
       </CardHeader>
       <CardContent>
         <ChartContainer
-          className="aspect-[2.4/1] w-full min-h-[220px]"
+          className="aspect-[4/3] w-full min-h-[200px] sm:aspect-[2.4/1] sm:min-h-[220px]"
           config={{
             revenue: { label: 'Revenue', color: 'hsl(24 100% 50%)' },
           }}
         >
-          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(24 100% 50%)" stopOpacity={0.35} />
@@ -52,7 +52,7 @@ export function RevenueAreaChart({ data, days }: { data: Point[]; days: number }
               tickMargin={8}
               fontSize={11}
               tickFormatter={(v) => (v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`)}
-              width={48}
+              width={40}
             />
             <ChartTooltip
               content={

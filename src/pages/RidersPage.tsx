@@ -4,7 +4,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { toast } from 'sonner';
 import { Bike, CheckCircle2, Clock, Eye, ExternalLink, XCircle } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
-import { StatCard } from '@/components/dashboard/StatCard';
+import { StatCard, STATS_GRID_CLASS } from '@/components/dashboard/StatCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FilterPills } from '@/components/ui/filter-pills';
@@ -166,7 +166,7 @@ export function RidersPage() {
       title="Riders"
       subtitle="Review KYC documents, bank details, and approve or reject rider applications"
     >
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={`mb-6 ${STATS_GRID_CLASS}`}>
         <StatCard
           label="Total riders"
           value={counts.loading ? '…' : counts.all}

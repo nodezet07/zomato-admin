@@ -161,12 +161,12 @@ export function QuickStatsCard({
         {rows.map((row, i) => (
           <div
             key={row.label}
-            className={`flex items-center justify-between py-3 text-sm ${
+            className={`flex flex-col gap-1 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 ${
               i < rows.length - 1 ? 'border-b border-zinc-100' : ''
             }`}
           >
             <span className="font-medium text-zinc-600">{row.label}</span>
-            <span className="font-black text-ink">{row.value}</span>
+            <span className="font-black text-ink shrink-0">{row.value}</span>
           </div>
         ))}
       </CardContent>

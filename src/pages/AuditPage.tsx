@@ -39,7 +39,7 @@ export function AuditPage() {
         </select>
       }
     >
-      <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
+      <div className="rounded-xl border border-black/5 bg-white overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

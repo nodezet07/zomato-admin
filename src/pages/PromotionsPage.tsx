@@ -121,9 +121,9 @@ export function PromotionsPage() {
       }
     >
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {isLoading && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
           )}
           {data?.coupons.map((c) => (
             <Card key={c._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
@@ -169,7 +169,7 @@ export function PromotionsPage() {
             </Card>
           ))}
           {!isLoading && !data?.coupons.length && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No coupons found.</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No coupons found.</div>
           )}
         </div>
       ) : (
@@ -263,7 +263,7 @@ export function PromotionsPage() {
               <Label>Description</Label>
               <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label>Type</Label>
                 <select
@@ -280,7 +280,7 @@ export function PromotionsPage() {
                 <Input type="number" min={1} value={form.discountValue} onChange={(e) => setForm((f) => ({ ...f, discountValue: e.target.value }))} required />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label>Min order (₹)</Label>
                 <Input type="number" value={form.minimumOrderAmount} onChange={(e) => setForm((f) => ({ ...f, minimumOrderAmount: e.target.value }))} />
@@ -290,7 +290,7 @@ export function PromotionsPage() {
                 <Input type="number" value={form.maximumDiscount} onChange={(e) => setForm((f) => ({ ...f, maximumDiscount: e.target.value }))} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label>Valid from</Label>
                 <Input type="date" value={form.validFrom} onChange={(e) => setForm((f) => ({ ...f, validFrom: e.target.value }))} required />
