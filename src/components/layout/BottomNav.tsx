@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Store,
@@ -16,7 +16,10 @@ import {
   BarChart3,
   ScrollText,
   MoreHorizontal,
+  LogOut,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -49,7 +52,15 @@ const moreLinks = [
 export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
   const moreActive = moreLinks.some((l) => location.pathname.startsWith(l.to));
+
+  const handleLogout = () => {
+    setMoreOpen(false);
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <nav
@@ -111,6 +122,15 @@ export function BottomNav() {
                 </NavLink>
               ))}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 w-full rounded-xl border-rose-200 font-bold text-rose-600 hover:bg-rose-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 size-4" />
+              Log out
+            </Button>
           </SheetContent>
         </Sheet>
       </div>

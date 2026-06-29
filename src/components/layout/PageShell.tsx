@@ -10,7 +10,7 @@ type Props = {
 
 export function PageShell({ eyebrow, title, subtitle, action, children }: Props) {
   return (
-    <div className="px-4 pb-6 pt-4 sm:px-6 md:pt-6 lg:px-8 lg:pt-8">
+    <div className="px-4 pb-24 pt-4 sm:px-6 md:pb-6 md:pt-6 lg:px-8 lg:pt-8">
       <header className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           {eyebrow && (

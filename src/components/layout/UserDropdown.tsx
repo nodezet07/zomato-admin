@@ -20,19 +20,33 @@ export function UserDropdown() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="font-semibold">
-          {admin?.name ?? 'Admin'}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem disabled>{admin?.email}</DropdownMenuItem>
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="size-4 mr-2" />
-          Logout
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2 shrink-0">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="md:hidden font-semibold text-rose-600 border-rose-200 hover:bg-rose-50"
+        onClick={handleLogout}
+      >
+        <LogOut className="size-4 shrink-0" />
+        <span className="ml-1">Log out</span>
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="font-semibold max-w-[140px] truncate">
+            {admin?.name ?? 'Admin'}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled className="truncate max-w-[220px]">
+            {admin?.email}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="size-4 mr-2" />
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

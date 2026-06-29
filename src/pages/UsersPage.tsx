@@ -77,44 +77,69 @@ export function UsersPage() {
       }
     >
       {isMobile ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {isLoading && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
           )}
           {data?.users.map((u) => (
             <Card key={u._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
               <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-ink text-sm">{u.fullName ?? '—'}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{u.email ?? u.mobile ?? '—'}</p>
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-ink text-sm truncate">{u.fullName ?? '—'}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {u.email ?? u.mobile ?? '—'}
+                    </p>
                   </div>
-                  <Badge variant={u.accountStatus === 'active' ? 'default' : 'destructive'}>
+                  <Badge
+                    variant={u.accountStatus === 'active' ? 'default' : 'destructive'}
+                    className="shrink-0 text-[10px]"
+                  >
                     {u.accountStatus}
                   </Badge>
                 </div>
-                <div className="flex justify-between items-center text-xs pt-2 border-t border-zinc-100">
-                  <div className="space-y-1">
+                <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-zinc-100">
+                  <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Role</p>
-                    <Badge variant="secondary" className="capitalize">{u.role.replace(/_/g, ' ')}</Badge>
+                    <Badge variant="secondary" className="mt-1 capitalize text-[10px] max-w-full truncate">
+                      {u.role.replace(/_/g, ' ')}
+                    </Badge>
                   </div>
-                  <div className="space-y-1 text-right">
+                  <div className="min-w-0 text-right">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Joined</p>
-                    <p className="font-semibold text-zinc-700">{formatDate(u.createdAt)}</p>
+                    <p className="mt-1 font-semibold text-zinc-700 text-[11px] leading-snug">
+                      {formatDate(u.createdAt)}
+                    </p>
                   </div>
                 </div>
-                <div className="pt-2 flex justify-end">
+                <div className="pt-1">
                   {u.accountStatus === 'blocked' ? (
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => unblockMut.mutate(u._id)}>Unblock</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => unblockMut.mutate(u._id)}
+                    >
+                      Unblock
+                    </Button>
                   ) : (
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => blockMut.mutate(u._id)}>Block</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => blockMut.mutate(u._id)}
+                    >
+                      Block
+                    </Button>
                   )}
                 </div>
               </CardContent>
             </Card>
           ))}
           {!isLoading && !data?.users.length && (
-            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No users found.</div>
+            <div className="text-center py-8 text-muted bg-white border border-black/5 rounded-xl">
+              No users found.
+            </div>
           )}
         </div>
       ) : (
@@ -163,9 +188,26 @@ export function UsersPage() {
         </div>
       )}
       {data && data.pagination.totalPages > 1 && (
-        <div className="mt-4 flex gap-2">
-          <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
-          <Button variant="outline" disabled={page >= data.pagination.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-2">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Previous
+          </Button>
+          <p className="text-center text-xs text-muted self-center sm:px-2">
+            Page {page} of {data.pagination.totalPages}
+          </p>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={page >= data.pagination.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
     </PageShell>
