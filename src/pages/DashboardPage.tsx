@@ -114,7 +114,7 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <PageShell title={pageTitle} subtitle="Loading platform overview…">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-36 rounded-xl" />
           ))}
@@ -171,7 +171,7 @@ export function DashboardPage() {
       }
     >
       {/* KPI sparkline row */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <SparklineStatCard
           label="Range revenue"
           sublabel={`${days}d`}
@@ -208,7 +208,7 @@ export function DashboardPage() {
       </div>
 
       {/* Platform snapshot row */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <SparklineStatCard
           label="Total users"
           value={(stats?.users.total ?? 0).toLocaleString()}
@@ -269,7 +269,7 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <QuickStatsCard
           title="Quick stats"
           subtitle="Key metrics summary"
@@ -347,7 +347,7 @@ export function DashboardPage() {
       </div>
 
       {/* Finance footer row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Platform GMV', value: formatCurrency(finance?.platform.totalGmv ?? 0) },
           { label: 'Commission earned', value: formatCurrency(finance?.platform.totalCommission ?? 0) },

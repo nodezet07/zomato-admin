@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 
 import { Input } from '@/components/ui/input';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 import {
 
   Table,
@@ -65,12 +67,14 @@ import {
 } from '@/services/admin';
 
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 
 export function FinancePage() {
 
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
 
   const [refInput, setRefInput] = useState<Record<string, string>>({});
 
@@ -229,55 +233,71 @@ export function FinancePage() {
       <Button variant="outline" size="sm" onClick={exportCsv}>Export CSV</Button>
     }>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div className="rounded-xl border border-black/5 bg-white p-4">
+        <Card className="border-black/5 bg-white shadow-sm p-0">
 
-          <p className="text-xs font-bold uppercase text-muted">Total GMV</p>
+          <CardContent className="p-4">
 
-          <p className="text-xl font-black">{formatCurrency(s?.platform.totalGmv ?? 0)}</p>
+            <p className="text-xs font-bold uppercase text-muted">Total GMV</p>
 
-        </div>
+            <p className="text-xl font-black">{formatCurrency(s?.platform.totalGmv ?? 0)}</p>
 
-        <div className="rounded-xl border border-black/5 bg-white p-4">
+          </CardContent>
 
-          <p className="text-xs font-bold uppercase text-muted">Commission earned</p>
+        </Card>
 
-          <p className="text-xl font-black">{formatCurrency(s?.platform.totalCommission ?? 0)}</p>
+        <Card className="border-black/5 bg-white shadow-sm p-0">
 
-        </div>
+          <CardContent className="p-4">
 
-        <div className="rounded-xl border border-black/5 bg-white p-4">
+            <p className="text-xs font-bold uppercase text-muted">Commission earned</p>
 
-          <p className="text-xs font-bold uppercase text-muted">Pending restaurant</p>
+            <p className="text-xl font-black">{formatCurrency(s?.platform.totalCommission ?? 0)}</p>
 
-          <p className="text-xl font-black">{formatCurrency(s?.pendingRestaurantSettlement.netPayable ?? 0)}</p>
+          </CardContent>
 
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-black/5 bg-white p-4">
+        <Card className="border-black/5 bg-white shadow-sm p-0">
 
-          <p className="text-xs font-bold uppercase text-muted">Pending rider</p>
+          <CardContent className="p-4">
 
-          <p className="text-xl font-black">{formatCurrency(s?.pendingRiderPayout.grossEarnings ?? 0)}</p>
+            <p className="text-xs font-bold uppercase text-muted">Pending restaurant</p>
 
-        </div>
+            <p className="text-xl font-black">{formatCurrency(s?.pendingRestaurantSettlement.netPayable ?? 0)}</p>
+
+          </CardContent>
+
+        </Card>
+
+        <Card className="border-black/5 bg-white shadow-sm p-0">
+
+          <CardContent className="p-4">
+
+            <p className="text-xs font-bold uppercase text-muted">Pending rider</p>
+
+            <p className="text-xl font-black">{formatCurrency(s?.pendingRiderPayout.grossEarnings ?? 0)}</p>
+
+          </CardContent>
+
+        </Card>
 
       </div>
 
 
 
-      <Tabs defaultValue="pending">
+      <Tabs defaultValue="pending" className="w-full">
 
-        <TabsList className="flex-wrap h-auto">
+        <TabsList className="flex flex-wrap h-auto w-full bg-muted p-1">
 
-          <TabsTrigger value="pending">Create batches</TabsTrigger>
+          <TabsTrigger value="pending" className="flex-1 min-w-[110px]">Create batches</TabsTrigger>
 
-          <TabsTrigger value="settlements">Settlements</TabsTrigger>
+          <TabsTrigger value="settlements" className="flex-1 min-w-[110px]">Settlements</TabsTrigger>
 
-          <TabsTrigger value="payouts">Rider payouts</TabsTrigger>
+          <TabsTrigger value="payouts" className="flex-1 min-w-[110px]">Rider payouts</TabsTrigger>
 
-          <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+          <TabsTrigger value="withdrawals" className="flex-1 min-w-[110px]">Withdrawals</TabsTrigger>
 
         </TabsList>
 
@@ -293,59 +313,57 @@ export function FinancePage() {
 
             </div>
 
-            <Table>
-
-              <TableHeader>
-
-                <TableRow>
-
-                  <TableHead>Restaurant</TableHead>
-
-                  <TableHead>Orders</TableHead>
-
-                  <TableHead>Net payable</TableHead>
-
-                  <TableHead className="text-right">Action</TableHead>
-
-                </TableRow>
-
-              </TableHeader>
-
-              <TableBody>
-
+            {isMobile ? (
+              <div className="grid grid-cols-2 gap-3 p-4">
                 {pendingRestQ.data?.restaurants.map((row) => (
-
-                  <TableRow key={row.restaurantId}>
-
-                    <TableCell className="font-semibold">{row.restaurantName ?? row.restaurantId}</TableCell>
-
-                    <TableCell>{row.orderCount}</TableCell>
-
-                    <TableCell>{formatCurrency(row.netPayable)}</TableCell>
-
-                    <TableCell className="text-right">
-
-                      <Button size="sm" onClick={() => createSettlementMut.mutate(row.restaurantId)} disabled={createSettlementMut.isPending}>
-
-                        Create settlement
-
-                      </Button>
-
-                    </TableCell>
-
-                  </TableRow>
-
+                  <Card key={row.restaurantId} className="border-black/5 overflow-hidden shadow-sm bg-white">
+                    <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
+                      <div>
+                        <h4 className="font-bold text-ink text-xs line-clamp-1">{row.restaurantName ?? row.restaurantId}</h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Orders: {row.orderCount}</p>
+                      </div>
+                      <div className="pt-2 border-t border-zinc-100 flex justify-between items-center">
+                        <span className="text-[11px] font-black text-brand">{formatCurrency(row.netPayable)}</span>
+                        <Button size="sm" className="h-7 text-[10px] px-2 py-0" onClick={() => createSettlementMut.mutate(row.restaurantId)} disabled={createSettlementMut.isPending}>
+                          Settlement
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-
                 {!pendingRestQ.data?.restaurants.length && (
-
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted">No pending restaurant earnings</TableCell></TableRow>
-
+                  <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No pending restaurant earnings</div>
                 )}
-
-              </TableBody>
-
-            </Table>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Restaurant</TableHead>
+                    <TableHead>Orders</TableHead>
+                    <TableHead>Net payable</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingRestQ.data?.restaurants.map((row) => (
+                    <TableRow key={row.restaurantId}>
+                      <TableCell className="font-semibold">{row.restaurantName ?? row.restaurantId}</TableCell>
+                      <TableCell>{row.orderCount}</TableCell>
+                      <TableCell>{formatCurrency(row.netPayable)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" onClick={() => createSettlementMut.mutate(row.restaurantId)} disabled={createSettlementMut.isPending}>
+                          Create settlement
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!pendingRestQ.data?.restaurants.length && (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted">No pending restaurant earnings</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
 
           </div>
 
@@ -359,59 +377,57 @@ export function FinancePage() {
 
             </div>
 
-            <Table>
-
-              <TableHeader>
-
-                <TableRow>
-
-                  <TableHead>Rider</TableHead>
-
-                  <TableHead>Deliveries</TableHead>
-
-                  <TableHead>Earnings</TableHead>
-
-                  <TableHead className="text-right">Action</TableHead>
-
-                </TableRow>
-
-              </TableHeader>
-
-              <TableBody>
-
+            {isMobile ? (
+              <div className="grid grid-cols-2 gap-3 p-4">
                 {pendingRiderQ.data?.riders.map((row) => (
-
-                  <TableRow key={row.riderId}>
-
-                    <TableCell className="font-mono">{row.riderCode ?? row.riderId}</TableCell>
-
-                    <TableCell>{row.deliveryCount}</TableCell>
-
-                    <TableCell>{formatCurrency(row.grossEarnings)}</TableCell>
-
-                    <TableCell className="text-right">
-
-                      <Button size="sm" onClick={() => createPayoutMut.mutate(row.riderId)} disabled={createPayoutMut.isPending}>
-
-                        Create payout
-
-                      </Button>
-
-                    </TableCell>
-
-                  </TableRow>
-
+                  <Card key={row.riderId} className="border-black/5 overflow-hidden shadow-sm bg-white">
+                    <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
+                      <div>
+                        <span className="font-mono text-xs font-black text-brand bg-brand/5 px-1.5 py-0.5 rounded-md truncate inline-block">{row.riderCode ?? row.riderId}</span>
+                        <p className="text-[10px] text-muted-foreground mt-1.5">Deliveries: {row.deliveryCount}</p>
+                      </div>
+                      <div className="pt-2 border-t border-zinc-100 flex justify-between items-center">
+                        <span className="text-[11px] font-black text-zinc-700">{formatCurrency(row.grossEarnings)}</span>
+                        <Button size="sm" className="h-7 text-[10px] px-2 py-0" onClick={() => createPayoutMut.mutate(row.riderId)} disabled={createPayoutMut.isPending}>
+                          Payout
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-
                 {!pendingRiderQ.data?.riders.length && (
-
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted">No pending rider earnings</TableCell></TableRow>
-
+                  <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No pending rider earnings</div>
                 )}
-
-              </TableBody>
-
-            </Table>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Rider</TableHead>
+                    <TableHead>Deliveries</TableHead>
+                    <TableHead>Earnings</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingRiderQ.data?.riders.map((row) => (
+                    <TableRow key={row.riderId}>
+                      <TableCell className="font-mono">{row.riderCode ?? row.riderId}</TableCell>
+                      <TableCell>{row.deliveryCount}</TableCell>
+                      <TableCell>{formatCurrency(row.grossEarnings)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" onClick={() => createPayoutMut.mutate(row.riderId)} disabled={createPayoutMut.isPending}>
+                          Create payout
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!pendingRiderQ.data?.riders.length && (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted">No pending rider earnings</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
 
           </div>
 
@@ -423,63 +439,63 @@ export function FinancePage() {
 
           <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
 
-            <Table>
-
-              <TableHeader>
-
-                <TableRow>
-
-                  <TableHead>Settlement</TableHead>
-
-                  <TableHead>Restaurant</TableHead>
-
-                  <TableHead>Amount</TableHead>
-
-                  <TableHead>Status</TableHead>
-
-                  <TableHead>Mark paid</TableHead>
-
-                </TableRow>
-
-              </TableHeader>
-
-              <TableBody>
-
+            {isMobile ? (
+              <div className="grid grid-cols-2 gap-3 p-4">
                 {settlementsQ.data?.settlements.map((row) => (
-
-                  <TableRow key={row._id}>
-
-                    <TableCell className="font-mono text-xs">{row.settlementNumber}</TableCell>
-
-                    <TableCell>{row.restaurantId?.restaurantName ?? '—'}</TableCell>
-
-                    <TableCell>{formatCurrency(row.netPayable)}</TableCell>
-
-                    <TableCell><Badge>{row.status}</Badge></TableCell>
-
-                    <TableCell>
-
-                      {row.status === 'PENDING' && (
-
-                        <div className="flex gap-2">
-
-                          <Input className="h-8 w-36" placeholder="Payment ref" value={refInput[row._id] ?? ''} onChange={(e) => setRefInput((p) => ({ ...p, [row._id]: e.target.value }))} />
-
-                          <Button size="sm" onClick={() => markSettlementMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Paid</Button>
-
+                  <Card key={row._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
+                    <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex justify-between items-start gap-1">
+                          <span className="font-mono text-[10px] text-zinc-500 truncate">{row.settlementNumber}</span>
+                          <Badge className="text-[9px] px-1 py-0 shrink-0">{row.status}</Badge>
                         </div>
-
+                        <h4 className="font-bold text-ink text-xs mt-1.5 line-clamp-1">{row.restaurantId?.restaurantName ?? '—'}</h4>
+                        <p className="text-xs font-black text-brand mt-1">{formatCurrency(row.netPayable)}</p>
+                      </div>
+                      {row.status === 'PENDING' && (
+                        <div className="pt-2 border-t border-zinc-100 space-y-1.5">
+                          <Input className="h-7 text-xs w-full" placeholder="Ref" value={refInput[row._id] ?? ''} onChange={(e) => setRefInput((p) => ({ ...p, [row._id]: e.target.value }))} />
+                          <Button size="sm" className="w-full h-7 text-[10px] py-0" onClick={() => markSettlementMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Paid</Button>
+                        </div>
                       )}
-
-                    </TableCell>
-
-                  </TableRow>
-
+                    </CardContent>
+                  </Card>
                 ))}
-
-              </TableBody>
-
-            </Table>
+                {!settlementsQ.data?.settlements.length && (
+                  <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No settlements found.</div>
+                )}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Settlement</TableHead>
+                    <TableHead>Restaurant</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Mark paid</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {settlementsQ.data?.settlements.map((row) => (
+                    <TableRow key={row._id}>
+                      <TableCell className="font-mono text-xs">{row.settlementNumber}</TableCell>
+                      <TableCell>{row.restaurantId?.restaurantName ?? '—'}</TableCell>
+                      <TableCell>{formatCurrency(row.netPayable)}</TableCell>
+                      <TableCell><Badge>{row.status}</Badge></TableCell>
+                      <TableCell>
+                        {row.status === 'PENDING' && (
+                          <div className="flex gap-2">
+                            <Input className="h-8 w-36" placeholder="Payment ref" value={refInput[row._id] ?? ''} onChange={(e) => setRefInput((p) => ({ ...p, [row._id]: e.target.value }))} />
+                            <Button size="sm" onClick={() => markSettlementMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Paid</Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
 
           </div>
 
@@ -491,57 +507,59 @@ export function FinancePage() {
 
           <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
 
-            <Table>
-
-              <TableHeader>
-
-                <TableRow>
-
-                  <TableHead>Payout</TableHead>
-
-                  <TableHead>Rider</TableHead>
-
-                  <TableHead>Amount</TableHead>
-
-                  <TableHead>Status</TableHead>
-
-                  <TableHead>Mark paid</TableHead>
-
-                </TableRow>
-
-              </TableHeader>
-
-              <TableBody>
-
+            {isMobile ? (
+              <div className="grid grid-cols-2 gap-3 p-4">
                 {payoutsQ.data?.payouts.map((row) => (
-
-                  <TableRow key={row._id}>
-
-                    <TableCell className="font-mono text-xs">{row.payoutNumber}</TableCell>
-
-                    <TableCell>{row.riderId?.riderCode ?? '—'}</TableCell>
-
-                    <TableCell>{formatCurrency(row.netPayable)}</TableCell>
-
-                    <TableCell><Badge>{row.status}</Badge></TableCell>
-
-                    <TableCell>
-
+                  <Card key={row._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
+                    <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex justify-between items-start gap-1">
+                          <span className="font-mono text-[10px] text-zinc-500 truncate">{row.payoutNumber}</span>
+                          <Badge className="text-[9px] px-1 py-0 shrink-0">{row.status}</Badge>
+                        </div>
+                        <h4 className="font-mono font-bold text-ink text-xs mt-1.5 truncate">Rider: {row.riderId?.riderCode ?? '—'}</h4>
+                        <p className="text-xs font-black text-brand mt-1">{formatCurrency(row.netPayable)}</p>
+                      </div>
                       {row.status === 'PENDING' && (
-
-                        <Button size="sm" onClick={() => markPayoutMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Mark paid</Button>
-
+                        <div className="pt-2 border-t border-zinc-100">
+                          <Button size="sm" className="w-full h-7 text-[10px] py-0" onClick={() => markPayoutMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Mark paid</Button>
+                        </div>
                       )}
-
-                    </TableCell>
-
-                  </TableRow>
-
+                    </CardContent>
+                  </Card>
                 ))}
-
-              </TableBody>
-
-            </Table>
+                {!payoutsQ.data?.payouts.length && (
+                  <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No payouts found.</div>
+                )}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Payout</TableHead>
+                    <TableHead>Rider</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Mark paid</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {payoutsQ.data?.payouts.map((row) => (
+                    <TableRow key={row._id}>
+                      <TableCell className="font-mono text-xs">{row.payoutNumber}</TableCell>
+                      <TableCell>{row.riderId?.riderCode ?? '—'}</TableCell>
+                      <TableCell>{formatCurrency(row.netPayable)}</TableCell>
+                      <TableCell><Badge>{row.status}</Badge></TableCell>
+                      <TableCell>
+                        {row.status === 'PENDING' && (
+                          <Button size="sm" onClick={() => markPayoutMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Mark paid</Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
 
           </div>
 
@@ -553,87 +571,83 @@ export function FinancePage() {
 
           <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
 
-            <Table>
-
-              <TableHeader>
-
-                <TableRow>
-
-                  <TableHead>Request</TableHead>
-
-                  <TableHead>Rider</TableHead>
-
-                  <TableHead>Amount</TableHead>
-
-                  <TableHead>Status</TableHead>
-
-                  <TableHead>Date</TableHead>
-
-                  <TableHead>Actions</TableHead>
-
-                </TableRow>
-
-              </TableHeader>
-
-              <TableBody>
-
+            {isMobile ? (
+              <div className="grid grid-cols-2 gap-3 p-4">
                 {withdrawalsQ.data?.requests.map((row) => (
-
-                  <TableRow key={row._id}>
-
-                    <TableCell className="font-mono text-xs">{row.requestNumber}</TableCell>
-
-                    <TableCell>{row.riderId?.riderCode ?? '—'}</TableCell>
-
-                    <TableCell>{formatCurrency(row.amount)}</TableCell>
-
-                    <TableCell><Badge variant="secondary">{row.status}</Badge></TableCell>
-
-                    <TableCell className="text-sm text-muted">{formatDate(row.createdAt)}</TableCell>
-
-                    <TableCell className="space-x-2">
-
+                  <Card key={row._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
+                    <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex justify-between items-start gap-1">
+                          <span className="font-mono text-[10px] text-zinc-500 truncate">{row.requestNumber}</span>
+                          <Badge variant="secondary" className="text-[9px] px-1 py-0 shrink-0">{row.status}</Badge>
+                        </div>
+                        <h4 className="font-mono font-bold text-ink text-xs mt-1.5 truncate">Rider: {row.riderId?.riderCode ?? '—'}</h4>
+                        <p className="text-xs font-black text-brand mt-1">{formatCurrency(row.amount)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(row.createdAt)}</p>
+                      </div>
                       {row.status === 'PENDING' && (
-
-                        <>
-
-                          <Button size="sm" onClick={() => approveWithdrawalMut.mutate(row._id)}>Approve</Button>
-
-                          <Button size="sm" variant="outline" onClick={() => rejectWithdrawalMut.mutate(row._id)}>Reject</Button>
-
-                        </>
-
+                        <div className="pt-2 border-t border-zinc-100 flex flex-col gap-1">
+                          <Button size="sm" className="w-full h-7 text-[10px] py-0" onClick={() => approveWithdrawalMut.mutate(row._id)}>Approve</Button>
+                          <Button size="sm" variant="outline" className="w-full h-7 text-[10px] py-0" onClick={() => rejectWithdrawalMut.mutate(row._id)}>Reject</Button>
+                        </div>
                       )}
-
                       {row.status === 'APPROVED' && (
-
-                        <>
-
-                          <Input className="h-8 w-28 inline" placeholder="Ref" value={refInput[row._id] ?? ''} onChange={(e) => setRefInput((p) => ({ ...p, [row._id]: e.target.value }))} />
-
-                          <Button size="sm" onClick={() => payWithdrawalMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Pay</Button>
-
-                          <Button size="sm" variant="outline" onClick={() => failWithdrawalMut.mutate(row._id)}>Mark failed</Button>
-
-                        </>
-
+                        <div className="pt-2 border-t border-zinc-100 space-y-1">
+                          <Input className="h-7 text-xs w-full" placeholder="Ref" value={refInput[row._id] ?? ''} onChange={(e) => setRefInput((p) => ({ ...p, [row._id]: e.target.value }))} />
+                          <Button size="sm" className="w-full h-7 text-[10px] py-0" onClick={() => payWithdrawalMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Pay</Button>
+                          <Button size="sm" variant="outline" className="w-full h-7 text-[10px] py-0" onClick={() => failWithdrawalMut.mutate(row._id)}>Fail</Button>
+                        </div>
                       )}
-
-                    </TableCell>
-
-                  </TableRow>
-
+                    </CardContent>
+                  </Card>
                 ))}
-
                 {!withdrawalsQ.data?.requests.length && (
-
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted">No withdrawal requests</TableCell></TableRow>
-
+                  <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No withdrawals found.</div>
                 )}
-
-              </TableBody>
-
-            </Table>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Request</TableHead>
+                    <TableHead>Rider</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {withdrawalsQ.data?.requests.map((row) => (
+                    <TableRow key={row._id}>
+                      <TableCell className="font-mono text-xs">{row.requestNumber}</TableCell>
+                      <TableCell>{row.riderId?.riderCode ?? '—'}</TableCell>
+                      <TableCell>{formatCurrency(row.amount)}</TableCell>
+                      <TableCell><Badge variant="secondary">{row.status}</Badge></TableCell>
+                      <TableCell className="text-sm text-muted">{formatDate(row.createdAt)}</TableCell>
+                      <TableCell className="space-x-2">
+                        {row.status === 'PENDING' && (
+                          <>
+                            <Button size="sm" onClick={() => approveWithdrawalMut.mutate(row._id)}>Approve</Button>
+                            <Button size="sm" variant="outline" onClick={() => rejectWithdrawalMut.mutate(row._id)}>Reject</Button>
+                          </>
+                        )}
+                        {row.status === 'APPROVED' && (
+                          <>
+                            <Input className="h-8 w-28 inline" placeholder="Ref" value={refInput[row._id] ?? ''} onChange={(e) => setRefInput((p) => ({ ...p, [row._id]: e.target.value }))} />
+                            <Button size="sm" onClick={() => payWithdrawalMut.mutate({ id: row._id, ref: refInput[row._id] ?? 'MANUAL' })}>Pay</Button>
+                            <Button size="sm" variant="outline" onClick={() => failWithdrawalMut.mutate(row._id)}>Mark failed</Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!withdrawalsQ.data?.requests.length && (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted">No withdrawal requests</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
 
           </div>
 

@@ -45,6 +45,33 @@ export async function fetchRestaurants(page = 1, status?: string) {
   return unwrap(res);
 }
 
+export type AdminCreateRestaurantInput = {
+  ownerEmail: string;
+  ownerFullName: string;
+  ownerMobile?: string;
+  autoApprove?: boolean;
+  restaurantName: string;
+  latitude: number;
+  longitude: number;
+  phone?: string;
+  description?: string;
+  cuisines?: string[];
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  };
+};
+
+export async function createRestaurant(input: AdminCreateRestaurantInput) {
+  const res = await apiFetch<ApiResponse<{ restaurant: RestaurantRow }>>(
+    '/admin/restaurants',
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+  return unwrap(res).restaurant;
+}
+
 export async function approveRestaurant(restaurantId: string) {
   const res = await apiFetch<ApiResponse<{ restaurant: RestaurantRow }>>(
     `/admin/restaurants/approve/${restaurantId}`,

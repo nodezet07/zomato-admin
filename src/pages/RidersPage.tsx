@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { FilterPills } from '@/components/ui/filter-pills';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Table,
   TableBody,
@@ -108,6 +110,7 @@ export function RidersPage() {
   const [rejectReason, setRejectReason] = useState('');
 
   const counts = useRiderStatusCounts();
+  const isMobile = useIsMobile();
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-riders', page, status],
@@ -163,7 +166,7 @@ export function RidersPage() {
       title="Riders"
       subtitle="Review KYC documents, bank details, and approve or reject rider applications"
     >
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Total riders"
           value={counts.loading ? '…' : counts.all}
@@ -205,82 +208,149 @@ export function RidersPage() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-black/5 bg-white shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-zinc-50/80 hover:bg-zinc-50/80">
-              <TableHead className="font-bold">Code</TableHead>
-              <TableHead className="font-bold">Rider</TableHead>
-              <TableHead className="font-bold">Vehicle</TableHead>
-              <TableHead className="font-bold">Status</TableHead>
-              <TableHead className="font-bold">Deliveries</TableHead>
-              <TableHead className="font-bold">Earnings</TableHead>
-              <TableHead className="text-right font-bold">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                  Loading riders…
-                </TableCell>
-              </TableRow>
-            )}
-            {!isLoading && !data?.riders.length && (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                  No riders found for this filter.
-                </TableCell>
-              </TableRow>
-            )}
-            {data?.riders.map((r) => (
-              <TableRow key={r._id} className="hover:bg-zinc-50/50">
-                <TableCell className="font-mono text-sm font-semibold">{r.riderCode}</TableCell>
-                <TableCell>
-                  <p className="font-semibold text-ink">{r.userId?.fullName ?? '—'}</p>
-                  <p className="text-xs text-muted-foreground">{r.userId?.mobile ?? r.userId?.email}</p>
-                </TableCell>
-                <TableCell className="text-sm">
-                  <p className="font-medium capitalize">{r.vehicleType?.toLowerCase() ?? '—'}</p>
-                  <p className="text-xs text-muted-foreground">{r.vehicleNumber ?? '—'}</p>
-                </TableCell>
-                <TableCell>
+      {isMobile ? (
+        <div className="grid grid-cols-2 gap-3">
+          {isLoading && (
+            <div className="col-span-2 text-center py-12 text-muted bg-white border border-black/5 rounded-xl">Loading riders…</div>
+          )}
+          {data?.riders.map((r) => (
+            <Card key={r._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-black text-brand bg-brand/5 px-2 py-0.5 rounded-md">{r.riderCode}</span>
+                      <h3 className="font-bold text-ink text-sm">{r.userId?.fullName ?? '—'}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{r.userId?.mobile ?? r.userId?.email}</p>
+                  </div>
                   <Badge variant={statusVariant(r.verificationStatus)} className="capitalize">
                     {r.verificationStatus}
                   </Badge>
-                </TableCell>
-                <TableCell className="font-semibold">{r.totalDeliveries}</TableCell>
-                <TableCell className="font-semibold">{formatCurrency(r.totalEarnings)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setReviewRider(r)}>
-                      <Eye className="mr-1 size-3.5" />
-                      Review
-                    </Button>
-                    {r.verificationStatus === 'pending' && (
-                      <>
-                        <Button size="sm" onClick={() => approveMut.mutate(r._id)}>
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setRejectTarget(r);
-                            setRejectReason('');
-                          }}
-                        >
-                          Reject
-                        </Button>
-                      </>
-                    )}
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs pt-2 border-t border-zinc-100">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Vehicle</p>
+                    <p className="font-medium text-zinc-700 capitalize">{r.vehicleType?.toLowerCase() ?? '—'}</p>
+                    <p className="text-[10px] text-muted-foreground">{r.vehicleNumber ?? '—'}</p>
                   </div>
-                </TableCell>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Deliveries</p>
+                    <p className="font-semibold text-zinc-700">{r.totalDeliveries}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Earnings</p>
+                    <p className="font-black text-brand">{formatCurrency(r.totalEarnings)}</p>
+                  </div>
+                </div>
+                <div className="pt-2 flex justify-end gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setReviewRider(r)}>
+                    <Eye className="mr-1 size-3.5" />
+                    Review
+                  </Button>
+                  {r.verificationStatus === 'pending' && (
+                    <>
+                      <Button size="sm" onClick={() => approveMut.mutate(r._id)}>
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setRejectTarget(r);
+                          setRejectReason('');
+                        }}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {!isLoading && !data?.riders.length && (
+            <div className="col-span-2 text-center py-12 text-muted bg-white border border-black/5 rounded-xl">No riders found.</div>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-black/5 bg-white shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-zinc-50/80 hover:bg-zinc-50/80">
+                <TableHead className="font-bold">Code</TableHead>
+                <TableHead className="font-bold">Rider</TableHead>
+                <TableHead className="font-bold">Vehicle</TableHead>
+                <TableHead className="font-bold">Status</TableHead>
+                <TableHead className="font-bold">Deliveries</TableHead>
+                <TableHead className="font-bold">Earnings</TableHead>
+                <TableHead className="text-right font-bold">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                    Loading riders…
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && !data?.riders.length && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                    No riders found for this filter.
+                  </TableCell>
+                </TableRow>
+              )}
+              {data?.riders.map((r) => (
+                <TableRow key={r._id} className="hover:bg-zinc-50/50">
+                  <TableCell className="font-mono text-sm font-semibold">{r.riderCode}</TableCell>
+                  <TableCell>
+                    <p className="font-semibold text-ink">{r.userId?.fullName ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">{r.userId?.mobile ?? r.userId?.email}</p>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <p className="font-medium capitalize">{r.vehicleType?.toLowerCase() ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">{r.vehicleNumber ?? '—'}</p>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariant(r.verificationStatus)} className="capitalize">
+                      {r.verificationStatus}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-semibold">{r.totalDeliveries}</TableCell>
+                  <TableCell className="font-semibold">{formatCurrency(r.totalEarnings)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setReviewRider(r)}>
+                        <Eye className="mr-1 size-3.5" />
+                        Review
+                      </Button>
+                      {r.verificationStatus === 'pending' && (
+                        <>
+                          <Button size="sm" onClick={() => approveMut.mutate(r._id)}>
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setRejectTarget(r);
+                              setRejectReason('');
+                            }}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {data && data.pagination.totalPages > 1 && (
         <div className="mt-4 flex items-center gap-3">
@@ -329,7 +399,7 @@ export function RidersPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <DocPreview label="Profile photo" url={reviewRider.profileImage} />
                 <DocPreview label="Driving license" url={reviewRider.drivingLicense} />
                 <DocPreview label="Aadhaar card" url={reviewRider.aadhaarCard} />

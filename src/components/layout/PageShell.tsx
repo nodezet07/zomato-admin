@@ -10,7 +10,7 @@ type Props = {
 
 export function PageShell({ eyebrow, title, subtitle, action, children }: Props) {
   return (
-    <div className="px-4 pb-8 pt-4 sm:px-6 md:pt-6 lg:px-8 lg:pt-8">
+    <div className="px-4 pb-6 pt-4 sm:px-6 md:pt-6 lg:px-8 lg:pt-8">
       <header className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           {eyebrow && (
@@ -25,7 +25,7 @@ export function PageShell({ eyebrow, title, subtitle, action, children }: Props)
             <p className="mt-1.5 text-xs leading-relaxed text-muted sm:text-sm">{subtitle}</p>
           )}
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {action && <div className="w-full sm:w-auto shrink-0 flex justify-start sm:justify-end">{action}</div>}
       </header>
       {children}
     </div>

@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/table';
 import { createCoupon, deleteCoupon, fetchCoupons } from '@/services/admin';
 import { formatDate } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const defaultForm = {
   couponCode: '',
@@ -39,6 +41,7 @@ const defaultForm = {
 
 export function PromotionsPage() {
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -102,9 +105,9 @@ export function PromotionsPage() {
       title="Promotions & Coupons"
       subtitle="Create and manage platform-wide and restaurant-specific offers"
       action={
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <select
-            className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="w-full sm:w-auto rounded-lg border border-black/10 px-3 py-2 text-sm"
             value={status}
             onChange={(e) => { setStatus(e.target.value); setPage(1); }}
           >
@@ -113,68 +116,122 @@ export function PromotionsPage() {
             <option value="INACTIVE">Inactive</option>
             <option value="EXPIRED">Expired</option>
           </select>
-          <Button className="bg-brand" onClick={() => setDialogOpen(true)}>New coupon</Button>
+          <Button className="w-full sm:w-auto bg-brand" onClick={() => setDialogOpen(true)}>New coupon</Button>
         </div>
       }
     >
-      <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Discount</TableHead>
-              <TableHead>Scope</TableHead>
-              <TableHead>Usage</TableHead>
-              <TableHead>Valid until</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted">Loading…</TableCell>
-              </TableRow>
-            )}
-            {data?.coupons.map((c) => (
-              <TableRow key={c._id}>
-                <TableCell className="font-mono font-bold">{c.couponCode}</TableCell>
-                <TableCell>{c.title}</TableCell>
-                <TableCell>
-                  {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
-                  {c.minimumOrderAmount > 0 && (
-                    <span className="block text-xs text-muted">Min ₹{c.minimumOrderAmount}</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-sm">{scopeLabel(c.applicableRestaurants)}</TableCell>
-                <TableCell className="text-sm">{c.usedCount}/{c.usageLimit}</TableCell>
-                <TableCell className="text-sm text-muted">{formatDate(c.validTo)}</TableCell>
-                <TableCell>
-                  <Badge variant={c.status === 'ACTIVE' ? 'default' : 'secondary'}>{c.status}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
+      {isMobile ? (
+        <div className="grid grid-cols-2 gap-3">
+          {isLoading && (
+            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">Loading…</div>
+          )}
+          {data?.coupons.map((c) => (
+            <Card key={c._id} className="border-black/5 overflow-hidden shadow-sm bg-white">
+              <CardContent className="p-3 space-y-2 flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex justify-between items-start gap-1">
+                    <span className="font-mono text-xs font-black text-brand bg-brand/5 px-1.5 py-0.5 rounded-md truncate">{c.couponCode}</span>
+                    <Badge variant={c.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-[9px] px-1 py-0 shrink-0">
+                      {c.status}
+                    </Badge>
+                  </div>
+                  <h3 className="font-bold text-ink text-xs mt-1.5 line-clamp-1">{c.title}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug line-clamp-1">{scopeLabel(c.applicableRestaurants)}</p>
+                </div>
+                <div className="pt-2 border-t border-zinc-100 flex flex-col gap-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Discount</span>
+                    <span className="font-bold text-zinc-700">
+                      {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Usage</span>
+                    <span className="font-semibold text-zinc-600">{c.usedCount}/{c.usageLimit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Expires</span>
+                    <span className="text-muted-foreground font-semibold">{formatDate(c.validTo)}</span>
+                  </div>
+                </div>
+                <div className="pt-2 flex justify-end">
                   <Button
                     size="sm"
                     variant="outline"
+                    className="w-full text-xs h-7 py-0"
                     onClick={() => deleteMut.mutate(c._id)}
                     disabled={deleteMut.isPending}
                   >
                     Delete
                   </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!isLoading && !data?.coupons.length && (
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {!isLoading && !data?.coupons.length && (
+            <div className="col-span-2 text-center py-8 text-muted bg-white border border-black/5 rounded-xl">No coupons found.</div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-black/5 bg-white overflow-hidden">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted">
-                  No coupons yet — run <code className="text-xs">npm run seed:coupons</code> or create one
-                </TableCell>
+                <TableHead>Code</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Discount</TableHead>
+                <TableHead>Scope</TableHead>
+                <TableHead>Usage</TableHead>
+                <TableHead>Valid until</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted">Loading…</TableCell>
+                </TableRow>
+              )}
+              {data?.coupons.map((c) => (
+                <TableRow key={c._id}>
+                  <TableCell className="font-mono font-bold">{c.couponCode}</TableCell>
+                  <TableCell>{c.title}</TableCell>
+                  <TableCell>
+                    {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
+                    {c.minimumOrderAmount > 0 && (
+                      <span className="block text-xs text-muted">Min ₹{c.minimumOrderAmount}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">{scopeLabel(c.applicableRestaurants)}</TableCell>
+                  <TableCell className="text-sm">{c.usedCount}/{c.usageLimit}</TableCell>
+                  <TableCell className="text-sm text-muted">{formatDate(c.validTo)}</TableCell>
+                  <TableCell>
+                    <Badge variant={c.status === 'ACTIVE' ? 'default' : 'secondary'}>{c.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteMut.mutate(c._id)}
+                      disabled={deleteMut.isPending}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!isLoading && !data?.coupons.length && (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted">
+                    No coupons yet — run <code className="text-xs">npm run seed:coupons</code> or create one
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {data && data.pagination.totalPages > 1 && (
         <div className="mt-4 flex gap-2">

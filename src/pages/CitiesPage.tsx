@@ -95,11 +95,11 @@ export function CitiesPage() {
       title="Cities & Zones"
       subtitle="Configure cities and delivery zones for multi-city operations"
       action={
-        <form onSubmit={handleSubmit} className="flex flex-wrap gap-2">
-          <Input placeholder="Code (MUM)" value={cityCode} onChange={(e) => setCityCode(e.target.value)} className="w-24" required />
-          <Input placeholder="City name" value={cityName} onChange={(e) => setCityName(e.target.value)} className="w-40" required />
-          <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="w-32" />
-          <Button type="submit" className="bg-brand" disabled={createMut.isPending}>Add city</Button>
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+          <Input placeholder="Code (MUM)" value={cityCode} onChange={(e) => setCityCode(e.target.value)} className="w-full sm:w-24" required />
+          <Input placeholder="City name" value={cityName} onChange={(e) => setCityName(e.target.value)} className="w-full sm:w-40" required />
+          <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="w-full sm:w-32" />
+          <Button type="submit" className="w-full sm:w-auto bg-brand" disabled={createMut.isPending}>Add city</Button>
         </form>
       }
     >

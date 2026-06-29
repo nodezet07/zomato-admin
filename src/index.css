@@ -21,6 +21,15 @@
   --color-border: #e4e4e7;
   --color-input: #e4e4e7;
   --color-ring: #ff5a00;
+
+  --color-sidebar: #ffffff;
+  --color-sidebar-foreground: #1a1c1c;
+  --color-sidebar-primary: #ff5a00;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #f4f4f5;
+  --color-sidebar-accent-foreground: #ff5a00;
+  --color-sidebar-border: #e4e4e7;
+  --color-sidebar-ring: #ff5a00;
 }
 
 * {
@@ -44,3 +53,28 @@ body {
 .text-muted {
   color: var(--color-muted-foreground) !important;
 }
+
+/* Custom scrollbar for horizontal tables and overflow scrollable elements */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 99px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+

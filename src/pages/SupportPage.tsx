@@ -86,7 +86,7 @@ export function SupportPage() {
       subtitle="View tickets, reply, and resolve issues"
       action={
         <select
-          className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+          className="w-full sm:w-auto rounded-lg border border-black/10 px-3 py-2 text-sm"
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
         >

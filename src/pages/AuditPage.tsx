@@ -29,7 +29,7 @@ export function AuditPage() {
       title="Audit Log"
       subtitle="Admin actions across users, finance, refunds, and platform config"
       action={
-        <select className="rounded-lg border px-3 py-2 text-sm" value={module} onChange={(e) => { setModule(e.target.value); setPage(1); }}>
+        <select className="w-full sm:w-auto rounded-lg border border-black/10 px-3 py-2 text-sm" value={module} onChange={(e) => { setModule(e.target.value); setPage(1); }}>
           <option value="">All modules</option>
           <option value="user">User</option>
           <option value="restaurant">Restaurant</option>

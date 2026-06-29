@@ -84,12 +84,12 @@ export function PlatformPage() {
       title="Platform Config"
       subtitle="Commission, rider pricing, delivery fees, and settlement rules"
     >
-      <Tabs defaultValue="finance">
-        <TabsList>
-          <TabsTrigger value="finance">Finance & Commission</TabsTrigger>
-          <TabsTrigger value="rider">Rider Pricing</TabsTrigger>
-          <TabsTrigger value="delivery">Delivery Fees</TabsTrigger>
-          <TabsTrigger value="cancellation">Cancellation Rules</TabsTrigger>
+      <Tabs defaultValue="finance" className="w-full">
+        <TabsList className="flex flex-wrap h-auto w-full bg-muted p-1">
+          <TabsTrigger value="finance" className="flex-1 min-w-[120px]">Finance & Commission</TabsTrigger>
+          <TabsTrigger value="rider" className="flex-1 min-w-[120px]">Rider Pricing</TabsTrigger>
+          <TabsTrigger value="delivery" className="flex-1 min-w-[120px]">Delivery Fees</TabsTrigger>
+          <TabsTrigger value="cancellation" className="flex-1 min-w-[120px]">Cancellation Rules</TabsTrigger>
         </TabsList>
 
         <form onSubmit={handleSubmit}>
@@ -245,7 +245,7 @@ export function PlatformPage() {
                       onChange={(e) => updateRule(i, { description: e.target.value })}
                       placeholder="Description"
                     />
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <select
                         className="rounded-lg border border-black/10 px-2 py-1.5 text-sm"
                         value={rule.chargeType}
